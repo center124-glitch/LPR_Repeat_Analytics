@@ -3,19 +3,25 @@
 <head>
 <!--
   LPR Repeat Analytics — ระบบตรวจหาทะเบียนรถยนต์เข้าใช้บริการซ้ำ (ศูนย์การค้าซีคอนบางแค)
-  ไฟล์: LPR_Repeat_Analytics_v7.html  ·  คู่กับ Code_LPR_v2.gs (BACKEND_VERSION = 2)
+  ไฟล์: LPR_Repeat_Analytics_v10.html  ·  คู่กับ Code_LPR_v3.gs (BACKEND_VERSION = 3)
   ─────────────────────────────────────────────────────────────────────────────
   สรุป PROJECT (ย่อ — ฉบับเต็มอยู่ใน PROJECT.md)
   • ข้อมูลต้นทาง: โฟลเดอร์ D:\งานข้อมูล LPR\LPR ปี.xx\xx.เดือน ...\YYYYMMDD_enter.csv / YYYYMMDD_exit.csv
     เข้ารหัส Windows-874 · มีแถวว่างแทรก · คอลัมน์: [ว่าง, วันเวลา dd/mm/yy HH:MM:SS, ทะเบียน,
     "Thailand (จังหวัด)", "Entry 01 (Entry 01)", รหัส, กลุ่มสมาชิก, ชื่อ/หมายเหตุ, ว่าง x3]
   • นิยาม: ตัดอ่านซ้ำ = ทะเบียนเดียวกัน ทิศทางเดียวกัน ห่างจากครั้งที่นับล่าสุด < 5 นาที (ตั้งค่าได้)
-    รถเข้าซ้ำ = เข้า ≥ 2 ครั้งในช่วงที่เลือก · ลูกค้าเก่า = เคยมาภายใน 30 วันก่อน
+    รถเข้าซ้ำ = ช่วง 1 วัน: เข้า ≥ 2 ครั้งในวันนั้น · หลายวัน: กลับมาต่างวัน (มา ≥ 2 วัน) (v8) · ลูกค้าเก่า = เคยมาภายใน 30 วันก่อน
     เวลาจอด = ออกครั้งแรกหลังเข้า ก่อนเข้าครั้งถัดไป ไม่เกิน 24 ชม.
     ไม่นับเป็นลูกค้า (ค่าเริ่มต้น): กลุ่มที่มีคำว่า Staff + ทะเบียนอ่านไม่สมบูรณ์
-  • ตัวเลขอ้างอิง (ตรวจด้วย Python แล้ว): 1–11 ต.ค. 69 รถเข้า 92,444 ครั้ง · 68,303 คัน · เข้าซ้ำ 12,638 คัน
+  • ตัวเลขอ้างอิง (ตรวจด้วย Python แล้ว): 1–11 ต.ค. 69 รถเข้า 92,444 ครั้ง · 68,303 คัน · กลับมาซ้ำ (≥ 2 วัน) 11,877 คัน
   ─────────────────────────────────────────────────────────────────────────────
   ประวัติเวอร์ชัน
+  v10 (13 พ.ย. 2569) — รายชื่อ "ไม่นับเป็นลูกค้า" + "เฝ้าระวัง" เก็บบน Google Drive ใช้ร่วมทุกเครื่อง (คิวส่งซ้ำเมื่อออฟไลน์, PIN ได้)
+       · ชุดข้อมูลครึ่งเดือนสร้างล่วงหน้าทุกคืน (เครื่องใหม่ซิงค์เร็วขึ้น) · หน้าประวัติทะเบียน (ปฏิทิน/ชั่วโมง/ประตู/พิมพ์ A4)
+       · แท็บเฝ้าระวัง + แจ้งเตือน · การ์ดสรุป LINE (รูป + ข้อความ) · เทียบช่วงเดียวกันปีก่อน
+  v9 (13 พ.ย. 2569) — กลับเป็นโครงหน้าแบบแท็บเมนูด้านบน (แบบ v3) ทุกขนาดจอ · สี อนิเมชั่น การ์ด KPI สีเข้ม และฟังก์ชันทั้งหมดเหมือน v8
+  v8 (13 พ.ย. 2569) — เปลี่ยนนิยาม "รถเข้าซ้ำ": รายวัน = เข้า ≥ 2 ครั้งในวันนั้น (เหมือนเดิม) · สัปดาห์/เดือน/ปี/กำหนดเองหลายวัน = กลับมาต่างวัน
+      (มา ≥ 2 วัน) — รถเข้า-ออกหลายรอบในวันเดียวแสดงเป็นข้อมูลประกอบ ไม่นับรวม
   v7 (12 พ.ย. 2569) — ไอคอนบน PC มุมโค้งพื้นโปร่งใส (manifest ขนาด 512 แบบ any เปลี่ยนเป็นมุมโค้ง), ย้ายโฟลเดอร์ Drive เป็น "งานข้อมูล LPR App"
       (ตั้งที่ Script Properties → FOLDER_ID) · ไฟล์เดิมที่ย้ายโฟลเดอร์ (ขนาด+เวลาแก้ไขเท่าเดิม) ไม่ดึงซ้ำ
   v6 (12 พ.ย. 2569) — ตรวจทานรอบ 2: นิยาม "วันที่มีข้อมูล" จุดเดียว (ต้องมีไฟล์ขาเข้าของวันนั้น) กันวันปลอมจากแถวหลังเที่ยงคืน,
@@ -133,14 +139,9 @@ body.fx-lite .orb.o1,body.fx-lite .orb.o3{animation:fl1 24s ease-in-out infinite
 /* ====== โครงหน้า: เมนูด้านข้าง (คอม) + เนื้อหา ====== */
 .shell{display:flex;min-height:100vh;min-height:100dvh}
 .side{display:none}
-@media(min-width:1100px){
-  /* เมนูด้านข้างตรึงกับจอ (fixed) — ไม่เลื่อนตามเนื้อหา; เนื้อหาเว้นที่ด้านซ้ายเท่าความกว้างเมนู */
-  .side{display:flex;flex-direction:column;gap:14px;position:fixed;left:0;top:0;bottom:0;z-index:40;width:248px;padding:calc(18px + var(--safe-t)) 14px calc(18px + var(--safe-b)) calc(14px + var(--safe-l))}
-  .content{margin-left:248px}
-  .side-in{flex:1;display:flex;flex-direction:column;gap:6px;background:var(--glass);backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);border:1px solid var(--glass-line);border-radius:26px;box-shadow:var(--shadow);padding:18px 12px;min-height:0;overflow:auto}
-  .mobile-tabs{display:none!important}
-  .topbar .brand{display:none!important}
-}
+/* v9: กลับเป็นโครงแบบแท็บเมนูด้านบน (แบบ v3) ทุกขนาดจอ — ไม่มีเมนูด้านข้าง; หัวแอป+แท็บติดบนจอ (sticky) */
+.side{display:none!important}
+.content{margin-left:0}
 .side .logo{display:flex;align-items:center;gap:10px;padding:2px 8px 14px}
 .side .logo img{width:44px;height:44px;border-radius:13px;box-shadow:0 8px 20px -6px rgba(236,72,153,.6)}
 .side .logo b{display:block;font-family:Prompt;font-weight:800;font-size:17px;color:var(--ink);line-height:1.15}
@@ -164,7 +165,7 @@ body.fx-lite .orb.o1,body.fx-lite .orb.o3{animation:fl1 24s ease-in-out infinite
 .page-h{flex:1 1 220px;min-width:0}
 .page-h h1{font-size:19px;font-weight:700}
 .page-h p{margin:0;font-size:12.5px;color:var(--ink-mute)}
-@media(max-width:1099px){.page-h{display:none}}
+.page-h{display:none}
 .qsearch{position:relative;flex:0 1 260px;min-width:0}
 .qsearch input{width:100%;min-height:40px;border-radius:14px;border:1px solid var(--line);background:var(--glass2);padding:0 12px 0 36px}
 .qsearch svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--ink-mute)}
@@ -189,6 +190,8 @@ body.fx-lite .orb.o1,body.fx-lite .orb.o3{animation:fl1 24s ease-in-out infinite
 .avatar{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:var(--grad);color:#fff;font-family:Prompt;font-weight:700;font-size:13px}
 /* แท็บมือถือ: เลื่อนแนวนอนในตัวเอง */
 .mobile-tabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:10px -12px -4px;padding:0 12px 4px}
+@media(min-width:1100px){.mobile-tabs{gap:8px;padding-top:2px}.mobile-tabs .tab{min-height:44px;padding:0 18px;font-size:14.5px}}
+.mobile-tabs .tab:not(.on):hover{background:var(--grad-soft);color:var(--ink)}
 .mobile-tabs::-webkit-scrollbar{display:none}
 .tab{flex:0 0 auto;display:flex;align-items:center;gap:8px;min-height:42px;padding:0 14px;border:1px solid transparent;background:transparent;color:var(--ink-soft);font-family:Prompt;font-weight:500;font-size:14px;border-radius:13px;white-space:nowrap;transition:background .2s,color .2s}
 .mobile-tabs .tab.on{background:var(--grad);color:#fff;box-shadow:0 8px 18px -10px rgba(168,85,247,.9)}
@@ -409,6 +412,21 @@ body:not(.fx-off) .sp-hint{animation:blink 2s ease-in-out infinite}
   .sp-feat{display:none}
   .orb.o1{width:160px;height:160px}.orb.o3{width:110px;height:110px}.dots{display:none}
 }
+/* v10: ปฏิทินโปรไฟล์ทะเบียน + กราฟชั่วโมง */
+.cal-wrap{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px}
+.cal-t{font-family:Prompt;font-weight:700;font-size:13.5px;margin-bottom:4px;color:var(--ink)}
+.cal-g{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cal-h{font-size:10.5px;text-align:center;color:var(--ink-mute)}
+.cal-d{font-size:11.5px;text-align:center;border-radius:6px;padding:3px 0;background:var(--card2);color:var(--ink);font-variant-numeric:tabular-nums}
+.cal-d.nod{opacity:.35;background:repeating-linear-gradient(45deg,transparent 0 3px,rgba(120,120,150,.25) 3px 5px)}
+.hrs{display:grid;grid-template-columns:repeat(24,1fr);gap:2px;height:110px;align-items:end}
+.hrs>div{height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center}
+.hrs i{display:block;width:100%;background:linear-gradient(180deg,#ec4899,#8b5cf6);border-radius:3px 3px 0 0;min-height:0}
+.hrs span{font-size:9.5px;color:var(--ink-mute);height:13px}
+#lineCardHolder{flex:0 0 auto}
+.watch-form{display:grid;grid-template-columns:minmax(0,180px) minmax(0,1fr) auto;gap:8px;align-items:end}
+@media (max-width:640px){.watch-form{grid-template-columns:minmax(0,1fr) auto}.watch-form .field:nth-child(2){grid-column:1/-1;grid-row:2}}
+#lineText{background:var(--card)}
 </style>
 </head>
 <body class="locked fx-full">
@@ -433,22 +451,8 @@ body:not(.fx-off) .sp-hint{animation:blink 2s ease-in-out infinite}
 
 <div class="shell">
   <!-- เมนูด้านข้าง (จอคอม ≥ 1100px) -->
-  <aside class="side">
-    <div class="side-in">
-      <div class="logo"><img alt="" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAMAAABlApw1AAAB4FBMVEX++/2tWfFzavaJYvaWXPbmidPJd+e2Ze/Sh+ZWdvUAAABjcfbDaeXbhtzVeNr5yxX77PbikdvblOV8Ou27c/JtKNmuhfTLat387dvgluHt1/KZidq5mfPcy/nRpfGhh9rStffoyPX98NyWde+OZsrX3PfluO/xxibAXuLekN6xW7fKU6p5OtvFqWjgftKFS95sctziqOmpVviuWPDYtVHrhMp4bdWuWPG0mZC3pPZLevZNevZKgPywWO+1o9vZTaLjSp2Zg/atV/GtV/Lrhsr60jZNe/aZW/atV/KnltX711T85JFNevaYW/eUXPaoiK1MevbRq1XJuNvrg8rshMrrhMrqhcvn2Nv86bFLevd9g8uER+uXWPedYfiAgP+gYMDYydvthcvmvDf722pFhPOVXPeLe82rlbjApofT4vz/AP9LdvaYWveSibSjYL/0gL9VVf+SXveRkqqKtPm5Rv+kf7q+p4fTsmLpVaLmvU773If84Xc/gPR+Qd1mZv+VV8Gdktuhe8G3j5a+oXe7qLS9sNzDm33AmIHbktvCpaTBr9zweMP/gID/mczuxVHqym/pzZ8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA1xieJAAAAoHRSTlP//v///v7////+AP///////////////////////////////////////////////////wzT/4//iP//c9IMb/////8uUNT/Toqw////i3PN/7L//xQtT7H//y7//xgMAv//bP///0v/////ARIr//8MA6///wf///////////8F////////////B///EQIF////AAAAAAAAAAAAAAAAAAAAEfXj4wAAEIpJREFUeNrVnYdj3EQWxuVdWZKdtSPL8matLd6179b4Lk5ww3ESB2yn95AGlxBIQiAEOMpxBbg7rvf2J98UlZE05Y1WG+y3ODjrEL7f996bGY3KGuOquHP38ca9e2dHFTHBickkLPKFXlHUrFoubBIjONbWLm5ub+/tKuUZCvUbSuUwAgRgpUOkPyQIY21ztzDAZ3c3RsHq+fonYvkp9/kEsf4UAYrN3UcFAG7D1Yv8ZzJgcQKUgYhhVRNAU75APyEIvZ9UAggz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"><div><b>LPR Analytics</b><span>REPEAT VISIT</span></div></div>
-      <div class="menu-h">เมนู</div>
-      <nav class="nav-side" id="sideNav">
-    <button class="tab on" data-tab="overview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>ภาพรวม</button>
-    <button class="tab" data-tab="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>ค้นหาทะเบียน</button>
-    <button class="tab" data-tab="repeat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/></svg>รถเข้าซ้ำ</button>
-    <button class="tab" data-tab="dwell"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/></svg>เวลาจอด</button>
-    <button class="tab" data-tab="quality"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 3 7v6c0 5 4 8 9 9 5-1 9-4 9-9V7z"/><path d="m9 12 2 2 4-4"/></svg>คุณภาพข้อมูล</button>
-    <button class="tab" data-tab="import"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0-4-4m4 4 4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>นำเข้าข้อมูล</button>
-    <button class="tab" data-tab="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>ตั้งค่า</button>
-  </nav>
-      <div class="stat" id="sideStat"><b>สถานะข้อมูล</b><br><span id="sideStatTxt">ยังไม่มีข้อมูล</span></div>
-    </div>
-  </aside>
+  <!-- v9: เมนูด้านข้างเอาออก ใช้แท็บด้านบนแทน (ข้อมูลสถานะอยู่ที่ชิปบนหัวแอป) -->
+  <span id="sideStatTxt" hidden></span>
 
   <div class="content">
   <header class="topbar"><div class="topbar-in">
@@ -462,6 +466,7 @@ body:not(.fx-off) .sp-hint{animation:blink 2s ease-in-out infinite}
       <div class="tb-actions">
         <span class="chip" id="dataChip" title="สถานะข้อมูล"><span class="dot"></span><span id="dataChipTxt">ยังไม่มีข้อมูล</span></span>
         <button class="btn sm" id="btnSync" hidden title="ซิงค์ข้อมูล"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 12a9 9 0 0 1-15.5 6.3M3 12A9 9 0 0 1 18.5 5.7"/><path d="M21 3v6h-6M3 21v-6h6"/></svg><span>ซิงค์</span></button>
+        <button class="btn sm" id="btnLine" title="สร้างการ์ดสรุปสำหรับส่ง LINE"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 11.5c0 4.1-4 7.5-9 7.5-1 0-2-.1-2.9-.4L5 20l1-3.3C4.1 15.3 3 13.5 3 11.5 3 7.4 7 4 12 4s9 3.4 9 7.5z"/></svg><span>การ์ด LINE</span></button>
         <button class="btn sm pri" id="btnReport"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg><span>รายงาน</span></button>
         <button class="btn sm icon" id="btnTheme" title="สลับโหมดสว่าง/มืด" aria-label="สลับโหมดสว่าง/มืด"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
       </div>
@@ -471,6 +476,7 @@ body:not(.fx-off) .sp-hint{animation:blink 2s ease-in-out infinite}
     <button class="tab" data-tab="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>ค้นหาทะเบียน</button>
     <button class="tab" data-tab="repeat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/></svg>รถเข้าซ้ำ</button>
     <button class="tab" data-tab="dwell"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/></svg>เวลาจอด</button>
+    <button class="tab" data-tab="watch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>เฝ้าระวัง<span class="badge" id="watchBadge" hidden>0</span></button>
     <button class="tab" data-tab="quality"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 3 7v6c0 5 4 8 9 9 5-1 9-4 9-9V7z"/><path d="m9 12 2 2 4-4"/></svg>คุณภาพข้อมูล</button>
     <button class="tab" data-tab="import"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0-4-4m4 4 4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>นำเข้าข้อมูล</button>
     <button class="tab" data-tab="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>ตั้งค่า</button>
@@ -488,6 +494,7 @@ body:not(.fx-off) .sp-hint{animation:blink 2s ease-in-out infinite}
     <span id="customBox" hidden style="display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap"><input type="date" id="dFrom" aria-label="ตั้งแต่"><span>ถึง</span><input type="date" id="dTo" aria-label="ถึง"></span>
     <button class="btn sm icon" id="btnNext" aria-label="ช่วงถัดไป">›</button>
     <button class="btn sm" id="btnLatest">ล่าสุด</button>
+    <div class="seg" id="segCmp" title="งวดที่ใช้เปรียบเทียบ"><button data-cmp="prev" class="on">เทียบงวดก่อน</button><button data-cmp="yoy">เทียบปีก่อน</button></div>
   </div>
   <div class="period-title"><h2 id="periodLabel">—</h2><span class="cov" id="covBadge" hidden></span><span class="cmp" id="cmpLabel"></span></div>
 </div>
@@ -554,6 +561,22 @@ body:not(.fx-off) .sp-hint{animation:blink 2s ease-in-out infinite}
   </section>
 
   <!-- คุณภาพข้อมูล -->
+  <!-- เฝ้าระวังทะเบียน (รายชื่อร่วมบน Drive) -->
+  <section class="page" id="pg-watch" hidden>
+    <div class="card">
+      <h3>👁️ รายการทะเบียนเฝ้าระวัง <span class="sub" id="watchSub"></span></h3>
+      <form id="watchForm" class="watch-form">
+        <div class="field"><label for="wPlate">ทะเบียน</label><input class="inp" id="wPlate" placeholder="เช่น กข1234" autocomplete="off"></div>
+        <div class="field"><label for="wNote">หมายเหตุ</label><input class="inp" id="wNote" maxlength="80" placeholder="เหตุผลที่เฝ้าระวัง (ไม่เกิน 80 ตัวอักษร)"></div>
+        <button class="btn pri" type="submit" style="min-height:44px">เพิ่ม</button>
+      </form>
+      <div class="err-t" id="wErr"></div>
+      <div class="hint" style="margin-top:6px" id="watchHint"></div>
+    </div>
+    <div id="watchAlert" style="margin-top:14px"></div>
+    <div class="card" style="margin-top:14px"><div class="tbl-wrap"><table class="tbl" id="tblWatch"></table></div></div>
+  </section>
+
   <section class="page" id="pg-quality" hidden>
     <div class="grid g-kpi" id="qKpis"></div>
     <div class="card" style="margin-top:14px"><h3>สรุปรายวัน <span class="sub">ช่วงที่เลือก</span></h3><div class="tbl-wrap"><table class="tbl" id="tblQuality"></table></div></div>
@@ -587,7 +610,7 @@ body:not(.fx-off) .sp-hint{animation:blink 2s ease-in-out infinite}
           <button class="btn" id="btnGasTest">ทดสอบการเชื่อมต่อ</button>
           <button class="btn cy" id="btnGasSync">ซิงค์ข้อมูลตอนนี้</button>
         </div>
-        <div class="field" style="margin-top:10px"><label for="gasRange">ช่วงข้อมูลที่ดึงจาก Drive</label><select class="inp" id="gasRange"><option value="m3">3 เดือนล่าสุด (เร็วสุด)</option><option value="y0">ตั้งแต่ต้นปีนี้ (แนะนำ)</option><option value="m12">12 เดือนล่าสุด</option><option value="y1">ปีนี้ + ปีที่แล้ว (ข้อมูลมาก)</option></select><div class="hint">ใน Drive มีข้อมูลปี 64–69 รวมหลายพันไฟล์ ดึงเฉพาะช่วงที่ใช้ — ครั้งแรกใช้เวลาราว 1–2 วินาที/ไฟล์ ครั้งต่อไปดึงเฉพาะไฟล์ใหม่</div></div>
+        <div class="field" style="margin-top:10px"><label for="gasRange">ช่วงข้อมูลที่ดึงจาก Drive</label><select class="inp" id="gasRange"><option value="m3">3 เดือนล่าสุด (เร็วสุด)</option><option value="y0">ตั้งแต่ต้นปีนี้ (แนะนำ)</option><option value="m12">12 เดือนล่าสุด</option><option value="y1">ปีนี้ + ปีที่แล้ว (สำหรับ "เทียบปีก่อน")</option></select><div class="hint">ใน Drive มีข้อมูลปี 64–69 รวมหลายพันไฟล์ ดึงเฉพาะช่วงที่ใช้ — ครั้งแรกใช้เวลาราว 1–2 วินาที/ไฟล์ ครั้งต่อไปดึงเฉพาะไฟล์ใหม่</div></div>
         <label class="switch"><span>ซิงค์อัตโนมัติทุกครั้งที่เปิดแอป</span><input type="checkbox" id="gasAuto"></label>
         <details style="margin-top:6px"><summary class="ff-head" style="cursor:pointer;font-weight:600;font-size:14px">วิธีตั้งค่า (ทำครั้งเดียว ~5 นาที)</summary>
           <ol class="steps" style="margin-top:10px">
@@ -621,7 +644,7 @@ body:not(.fx-off) .sp-hint{animation:blink 2s ease-in-out infinite}
         <div class="field" style="margin-top:6px"><label>กลุ่มที่ไม่นับเป็นลูกค้า</label><div id="sGroups" class="grid" style="grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:4px"></div><div class="hint">ค่าเริ่มต้น: กลุ่มที่มีคำว่า Staff</div></div>
         <div class="field" style="margin-top:12px"><label for="sStaff">รายชื่อทะเบียนที่ไม่นับเป็นลูกค้า <span class="tag mute" id="sStaffN">0 ทะเบียน</span></label>
           <textarea class="inp" id="sStaff" rows="5" style="padding:10px 12px;min-height:110px;font-family:Prompt" placeholder="พิมพ์ทีละบรรทัด เช่น&#10;1กฬ1922&#10;4ฒฉ720"></textarea>
-          <div class="hint">สำหรับรถพนักงาน/ผู้เช่าที่ยังไม่ได้ลงทะเบียนกลุ่มในระบบ LPR · เพิ่มได้จากหน้า "รถเข้าซ้ำ" (ปุ่ม 🚫) · เก็บในเครื่องนี้ — ย้ายไปเครื่องอื่นด้วยปุ่ม "สำรองการตั้งค่า" / "นำเข้าการตั้งค่า" ด้านขวา</div>
+          <div class="hint">สำหรับรถพนักงาน/ผู้เช่าที่ยังไม่ได้ลงทะเบียนกลุ่มในระบบ LPR · เพิ่มได้จากหน้า "รถเข้าซ้ำ" (ปุ่ม 🚫) · <span id="staffSyncHint">ใช้ร่วมทุกเครื่องผ่าน Google Drive (ต้องใช้ Code_LPR_v3.gs)</span></div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px"><button class="btn sm pri" id="btnStaffSave">บันทึกรายชื่อ</button><button class="btn sm" id="btnStaffCsv">⬇ ส่งออก CSV</button></div></div>
       </div>
       <div class="card">
@@ -642,6 +665,21 @@ body:not(.fx-off) .sp-hint{animation:blink 2s ease-in-out infinite}
 
 
 <!-- ===== Report preview ===== -->
+<!-- ===== การ์ด LINE ===== -->
+<div class="modal" id="lineModal" hidden role="dialog" aria-modal="true" aria-labelledby="lineTitle">
+  <div class="mbar">
+    <h3 id="lineTitle">การ์ดสรุปสำหรับ LINE</h3>
+    <button class="btn sm" id="btnLineCopy">📋 คัดลอกข้อความ</button>
+    <button class="btn sm pri" id="btnLinePng">🖼️ บันทึกรูป</button>
+    <button class="btn sm pri pulse" id="btnLineShare" hidden>แตะเพื่อบันทึก/แชร์รูป</button>
+    <button class="btn sm" id="btnLineClose">ปิด</button>
+  </div>
+  <div class="mbody" style="flex-direction:row;flex-wrap:wrap;justify-content:center;align-items:flex-start">
+    <div id="lineCardHolder"></div>
+    <textarea id="lineText" class="inp" readonly style="width:min(420px,100%);min-height:420px;padding:12px;font-family:Sarabun;line-height:1.7;font-size:15px"></textarea>
+  </div>
+</div>
+
 <div class="modal" id="rptModal" hidden role="dialog" aria-modal="true" aria-labelledby="rptTitle">
   <div class="mbar">
     <h3 id="rptTitle">ตัวอย่างรายงาน A4</h3>
@@ -1001,22 +1039,35 @@ const LPR = (() => {
     }
     // ----- ต่อคัน -----
     let repeat = 0, repeatVisits = 0, sameDayRep = 0, multiDay = 0;
+    // นิยาม "รถเข้าซ้ำ" (v8): ช่วง 1 วัน = เข้า ≥ 2 ครั้งในวันนั้น · ช่วงหลายวัน = กลับมาต่างวัน (มา ≥ 2 วัน)
+    // ทำไม: ช่วงหลายวันนับเฉพาะการกลับมาใหม่ ไม่ให้รถที่วิ่งเข้า-ออกหลายรอบในวันเดียว (ส่งของ/รับส่ง) ถูกนับเป็นลูกค้ากลับมาซ้ำ
+    const singleDay = a === b;
+    const isRep = (k) => (singleDay ? visits[k] >= 2 : daysC[k] >= 2);
     const fd = FREQ_DAY_BUCKETS.map(() => 0), fv = FREQ_VISIT_BUCKETS.map(() => 0);
     const provU = new Map(); const hourlyRep = new Array(24).fill(0);
     for (const k of touched) {
-      if (visits[k] >= 2) { repeat++; repeatVisits += visits[k]; }
+      if (isRep(k)) { repeat++; repeatVisits += visits[k]; }
       if (maxDayVisits[k] >= 2) sameDayRep++;
       if (daysC[k] >= 2) multiDay++;
       for (let q = 0; q < fd.length; q++) if (daysC[k] >= FREQ_DAY_BUCKETS[q][0] && daysC[k] <= FREQ_DAY_BUCKETS[q][1]) { fd[q]++; break; }
       for (let q = 0; q < fv.length; q++) if (visits[k] >= FREQ_VISIT_BUCKETS[q][0] && visits[k] <= FREQ_VISIT_BUCKETS[q][1]) { fv[q]++; break; }
       const pv = db.keyProv[k]; provU.set(pv, (provU.get(pv) || 0) + 1);
     }
-    for (let i = s; i < e; i++) if (E.kept[i] && ok(i) && visits[E.key[i]] >= 2) hourlyRep[(E.sec[i] / 3600) | 0]++;
+    // รายชั่วโมง/รายวันของรถเข้าซ้ำ (ใช้นิยามเดียวกับ R.repeat) — repU = จำนวนคันเข้าซ้ำที่มาในวันนั้น
+    const repDay = new Map(), seenRD = new Int32Array(nK).fill(-1); let repDaysSum = 0;
+    for (let i = s; i < e; i++) {
+      if (!E.kept[i] || !ok(i)) continue; const k = E.key[i]; if (!isRep(k)) continue;
+      hourlyRep[(E.sec[i] / 3600) | 0]++;
+      if (seenRD[k] !== E.day[i]) { seenRD[k] = E.day[i]; repDay.set(E.day[i], (repDay.get(E.day[i]) || 0) + 1); }
+    }
+    for (const k of touched) if (isRep(k)) repDaysSum += daysC[k];
 
     // รถที่มาเกือบทุกวัน (≥ 80% ของวันที่มีข้อมูล, ช่วง ≥ 5 วัน) — มักเป็นพนักงาน/ผู้เช่าที่ยังไม่ลงทะเบียนกลุ่ม
     let nd = 0, dd0 = 0; for (let d = a; d <= b; d++) { const inf = db.dayInfo.get(d); if (isDataDay(inf)) dd0++; }
     if (dd0 >= 5) { const th = Math.ceil(dd0 * 0.8); for (const k of touched) if (daysC[k] >= th) nd++; }
     R.nearDaily = dd0 >= 5 ? nd : null; R.nearDailyMin = dd0 >= 5 ? Math.ceil(dd0 * 0.8) : null;
+    R.repeatMode = singleDay ? 'sameDay' : 'multiDay';
+    R.repeatAvgDays = repeat ? repDaysSum / repeat : null; // รถเข้าซ้ำมาเฉลี่ยกี่วัน
     R.unique = touched.length; R.repeat = repeat; R.repeatVisits = repeatVisits; R.sameDayRep = sameDayRep; R.multiDay = multiDay;
     R.repeatRate = R.unique ? repeat / R.unique : null;
     R.multiDayRate = R.unique ? multiDay / R.unique : null;
@@ -1069,7 +1120,7 @@ const LPR = (() => {
     }
     let lbData = 0; for (let d = a - LB; d < a; d++) { const inf = db.dayInfo.get(d); if (isDataDay(inf)) lbData++; }
     R.returning = { before: periodRet, firstTime: periodNew, lookbackDays: LB, lookbackDataDays: lbData };
-    R.daily = R.dataDays.map((d) => { const o = dailyMap.get(d) || { day: d, visits: 0, unique: 0, sameDayRep: 0 }; return { day: d, visits: o.visits, unique: o.unique, sameDayRep: o.sameDayRep, ret: o.ret || 0, neu: o.neu || 0, raw: (db.dayInfo.get(d) || {}).enterRaw || 0 }; });
+    R.daily = R.dataDays.map((d) => { const o = dailyMap.get(d) || { day: d, visits: 0, unique: 0, sameDayRep: 0 }; return { day: d, visits: o.visits, unique: o.unique, sameDayRep: o.sameDayRep, repU: repDay.get(d) || 0, ret: o.ret || 0, neu: o.neu || 0, raw: (db.dayInfo.get(d) || {}).enterRaw || 0 }; });
     // วันธรรมดา (จ.–ศ.) เทียบ เสาร์–อาทิตย์: เฉลี่ยต่อวันจากวันที่มีข้อมูลของแต่ละกลุ่ม
     const wk = { wdDays: 0, wdVisits: 0, wdUnique: 0, wdRep: 0, weDays: 0, weVisits: 0, weUnique: 0, weRep: 0 };
     for (const o of R.daily) { const w = ymd(o.day).w, p = w === 0 || w === 6 ? 'we' : 'wd'; wk[p + 'Days']++; wk[p + 'Visits'] += o.visits; wk[p + 'Unique'] += o.unique; wk[p + 'Rep'] += o.sameDayRep; }
@@ -1078,7 +1129,7 @@ const LPR = (() => {
 
     // ----- อันดับรถเข้าซ้ำ -----
     if (wantTop) {
-      const tk = touched.filter((k) => visits[k] >= 2);
+      const tk = touched.filter(isRep);
       tk.sort((x, y) => daysC[y] - daysC[x] || visits[y] - visits[x] || firstAbs[x] - firstAbs[y]);
       R.top = tk.slice(0, wantTop === true ? tk.length : wantTop).map((k) => ({
         key: k, plate: db.plates[db.keyPlate[k]], prov: db.provs[db.keyProv[k]], days: daysC[k], visits: visits[k], maxDay: maxDayVisits[k],
@@ -1087,6 +1138,41 @@ const LPR = (() => {
       R.topTotal = tk.length;
     }
     return R;
+  }
+
+  function plateId(db, p) { if (!db._pix) { db._pix = new Map(); db.plates.forEach((x, i) => db._pix.set(x, i)); } const i = db._pix.get(normPlate(p)); return i === undefined ? -1 : i; }
+  /** โปรไฟล์ทะเบียนเดียว (หน้าประวัติทะเบียน): นับเฉพาะรายการที่ไม่ใช่อ่านซ้ำ ไม่ตัดกลุ่มพนักงาน (ดูประวัติจริงของรถคันนั้น) */
+  function plateProfile(db, plate, a, b) {
+    const pid = plateId(db, plate); if (pid < 0) return null;
+    const E = db.E, X = db.X, byDay = new Map(), hourly = new Array(24).fill(0), gates = new Map(), wd = new Array(7).fill(0);
+    let visits = 0, dup = 0, first = null, last = null, dwS = 0, dwN = 0, exits = 0, lastGate = '', prov = new Map(), grp = new Map(), stray = 0;
+    for (let i = 0; i < E.n; i++) {
+      if (E.plate[i] !== pid || E.day[i] < a || E.day[i] > b) continue;
+      if (!E.onData[i]) { stray++; continue; }
+      if (!E.kept[i]) { dup++; continue; }
+      visits++; const d = E.day[i]; byDay.set(d, (byDay.get(d) || 0) + 1); hourly[(E.sec[i] / 3600) | 0]++; wd[ymd(d).w]++;
+      const g = db.gates[E.gate[i]]; gates.set(g, (gates.get(g) || 0) + 1);
+      prov.set(db.provs[E.prov[i]], (prov.get(db.provs[E.prov[i]]) || 0) + 1); grp.set(groupLabel(db.grps[E.grp[i]]), (grp.get(groupLabel(db.grps[E.grp[i]])) || 0) + 1);
+      if (first === null) first = E.abs[i]; last = E.abs[i]; lastGate = g;
+      if (E.dwell[i] >= 0) { dwS += E.dwell[i]; dwN++; }
+    }
+    for (let i = 0; i < X.n; i++) if (X.plate[i] === pid && X.kept[i] && X.day[i] >= a && X.day[i] <= b) exits++;
+    const top = (m) => [...m].sort((x, y) => y[1] - x[1]).map(([k, v]) => ({ name: k, count: v }));
+    return { plate: db.plates[pid], valid: !!db.valid[pid], visits, days: byDay.size, byDay, hourly, weekday: wd, gates: top(gates), provs: top(prov), groups: top(grp), first, last, lastGate,
+      dwellAvg: dwN ? dwS / dwN : null, dwellN: dwN, exits, dup, stray, memo: db.memoByPlate.get(pid) || '', a, b };
+  }
+  /** สแกนรายการเฝ้าระวังครั้งเดียวทั้งชุดข้อมูล — ล่าสุดที่พบ, จำนวนวันใน 7/30 วันก่อน refDay */
+  function watchScan(db, plates, refDay) {
+    const want = new Map(); plates.forEach((p) => { const i = plateId(db, p); if (i >= 0) want.set(i, normPlate(p)); });
+    const out = new Map(plates.map((p) => [normPlate(p), { plate: normPlate(p), last: null, lastGate: '', lastDay: null, d7: new Set(), d30: new Set(), visits30: 0 }]));
+    const E = db.E;
+    for (let i = 0; i < E.n; i++) {
+      const p = want.get(E.plate[i]); if (p === undefined || !E.kept[i] || !E.onData[i]) continue;
+      const o = out.get(p), d = E.day[i];
+      if (o.last === null || E.abs[i] > o.last) { o.last = E.abs[i]; o.lastGate = db.gates[E.gate[i]]; o.lastDay = d; }
+      if (d > refDay - 30 && d <= refDay) { o.d30.add(d); o.visits30++; if (d > refDay - 7) o.d7.add(d); }
+    }
+    return [...out.values()].map((o) => Object.assign(o, { d7: o.d7.size, d30: o.d30.size }));
   }
 
   /** ประวัติทะเบียน (ค้นหา) — ทุกกลุ่ม ทุกสถานะ เพื่อให้ตรวจสอบย้อนหลังได้ครบ */
@@ -1130,7 +1216,7 @@ const LPR = (() => {
     const n = b - a + 1; return [a - n, a - 1];
   }
 
-  return { provName, parseDT, parseFileName, decodeBytes, parseCSV, plateValid, normPlate, build, analyze, lookup, periodRange, compareRange,
+  return { provName, parseDT, parseFileName, decodeBytes, parseCSV, plateValid, normPlate, build, analyze, lookup, plateProfile, watchScan, periodRange, compareRange,
     weekStart, dayNum, ymd, iso, fromIso, isDataDay, defaultExcluded, isExcludedGroup, groupLabel, DEFAULT_OPTS, DAY };
 })();
 if (typeof module !== 'undefined') module.exports = LPR;
@@ -1140,8 +1226,8 @@ if (typeof module !== 'undefined') module.exports = LPR;
 /* ===================================================================
  * APP — UI / นำเข้าข้อมูล / รายงาน / หน้าโลโก้
  * =================================================================== */
-const APP_VERSION = 7;
-const BACKEND_VERSION = 2;          // ต้องตรงกับ VERSION ใน Code_LPR_v2.gs
+const APP_VERSION = 10;
+const BACKEND_VERSION = 3;          // ต้องตรงกับ VERSION ใน Code_LPR_v2.gs
 let APP_BUSY = false;
 // URL ของ Apps Script (Code_LPR_v2.gs ที่ Deploy แล้ว) — ฝังไว้ให้ทุกเครื่องเปิดแล้วซิงค์ได้ทันที ไม่ต้องวาง URL เอง
 // ถ้า Deploy ใหม่แบบ "New deployment" (ได้ URL ใหม่) ให้แก้บรรทัดนี้ · ถ้าแค่ "New version" URL เดิม ไม่ต้องแก้
@@ -1160,7 +1246,7 @@ const ST = {
   dirHandle: null,
   rptFiles: null
 };
-const DEF_SET = { org: 'ศูนย์การค้าซีคอนบางแค', dedupMin: 5, lookback: 30, splitProv: false, excludeInvalid: true, grpOverride: {}, staffPlates: [],
+const DEF_SET = { org: 'ศูนย์การค้าซีคอนบางแค', dedupMin: 5, lookback: 30, splitProv: false, excludeInvalid: true, grpOverride: {}, staffPlates: [], watch: [], pendingOps: [], staffMigrated: false, cmpMode: 'prev',
   theme: 'auto', fx: 'full', enterSec: 3, idleMin: 4, gasUrl: DEFAULT_GAS_URL, gasAuto: true, syncRange: 'y0' };
 let SET = loadSettings();
 
@@ -1218,6 +1304,10 @@ function loadSettings() {
     // ค่าตัวเลขเพี้ยน (แก้ localStorage เอง/เวอร์ชันเก่า) → กลับค่าเริ่มต้น
     if (!(o.dedupMin >= 0 && o.dedupMin <= 60)) o.dedupMin = DEF_SET.dedupMin;
     if (!(o.lookback >= 1 && o.lookback <= 365)) o.lookback = DEF_SET.lookback;
+    if (!Array.isArray(o.watch)) o.watch = [];
+    o.watch = o.watch.filter((w) => w && w.plate).map((w) => ({ plate: LPR.normPlate(w.plate), note: String(w.note || '').slice(0, 80), at: +w.at || 0 }));
+    if (!Array.isArray(o.pendingOps)) o.pendingOps = []; o.pendingOps = o.pendingOps.filter((x) => x && (x.kind === 'staff' || x.kind === 'watch') && (x.op === 'add' || x.op === 'remove') && Array.isArray(x.items)).slice(-200);
+    if (o.cmpMode !== 'yoy') o.cmpMode = 'prev';
     if (!Array.isArray(o.staffPlates)) o.staffPlates = [];
     o.staffPlates = [...new Set(o.staffPlates.map((p) => LPR.normPlate(p)).filter((p) => p.length >= 2))];
     if (![2, 3, 4].includes(+o.enterSec)) o.enterSec = 3; if (![3, 4, 5].includes(+o.idleMin)) o.idleMin = 4;
@@ -1310,24 +1400,25 @@ async function rebuild(reason) {
     const t0 = performance.now();
     try { ST.db = ST.files.length ? LPR.build(ST.files, engineOpts()) : null; }
     catch (e) { console.error(e); toast('คำนวณข้อมูลไม่สำเร็จ: ' + e.message + ' — ลองลดช่วงข้อมูล (ลบเดือนเก่า) แล้วเปิดใหม่', 'err', 9000); return; }
-    ST.cache.clear();
+    ST.cache.clear(); ST.watchScan = null;
     if (ST.db && ST.db.E.n + ST.db.X.n > 8e6 && !ST.warnedBig) { ST.warnedBig = true; toast('ข้อมูลในแอปมากกว่า 8 ล้านรายการ — อาจช้าบนเครื่องหน่วยความจำน้อย แนะนำลบปีเก่าที่ไม่ใช้ในหน้า "นำเข้าข้อมูล"', 'warn', 9000); }
     console.info('build', Math.round(performance.now() - t0), 'ms');
     // ระบบเลือกช่วงให้ (ล่าสุด) ถ้าผู้ใช้ยังไม่เลือกเอง
     if (ST.db && (!ST.period.userPicked || ST.period.anchor == null || ST.period.anchor > ST.db.maxDay || ST.period.anchor < ST.db.minDay)) {
       const L = latestCompleteDay(ST.db); ST.period.anchor = L; ST.period.from = Math.max(ST.db.minDay, L - 6); ST.period.to = L; ST.period.userPicked = false;
     }
-    updateChip(); renderSettingsGroups(); render();
+    updateChip(); renderSettingsGroups(); render(); checkWatchAlerts();
   } finally { busy(false); }
 }
 function lastSyncTxt() { let t = 0; try { t = +localStorage.getItem('lpr_lastsync') || 0; } catch (e) {} if (!t) return ''; const m = Math.round((Date.now() - t) / 60000); return '<br>ซิงค์ล่าสุด ' + (m < 1 ? 'เมื่อสักครู่' : m < 60 ? m + ' นาทีก่อน' : m < 1440 ? Math.round(m / 60) + ' ชม.ก่อน' : Math.round(m / 1440) + ' วันก่อน'); }
 function updateChip() {
   const c = $('dataChip'), t = $('dataChipTxt'); c.className = 'chip';
-  if (!ST.db) { t.textContent = 'ยังไม่มีข้อมูล'; c.classList.add('warn'); $('sideStatTxt').textContent = 'ยังไม่มีข้อมูล — ไปที่ "นำเข้าข้อมูล"'; $('spBadge').textContent = 'ยังไม่มีข้อมูล — นำเข้าไฟล์ LPR ได้ที่เมนู "นำเข้าข้อมูล"'; return; }
+  if (!ST.db) { t.textContent = 'ยังไม่มีข้อมูล'; c.classList.add('warn'); if ($('sideStatTxt')) $('sideStatTxt').textContent = 'ยังไม่มีข้อมูล — ไปที่ "นำเข้าข้อมูล"'; $('spBadge').textContent = 'ยังไม่มีข้อมูล — นำเข้าไฟล์ LPR ได้ที่เมนู "นำเข้าข้อมูล"'; return; }
   c.classList.add('ok');
   t.textContent = 'ข้อมูล ' + dShortNoY(ST.db.minDay) + ' – ' + dShort(ST.db.maxDay);
+  c.title = 'สถานะข้อมูล · ' + fmt(ST.db.days.length) + ' วัน · ' + fmt(ST.files.length) + ' ไฟล์' + lastSyncTxt().replace('<br>', ' · ');
   $('spBadge').textContent = '📅 ข้อมูลล่าสุด ' + dLong(ST.db.maxDay);
-  $('sideStatTxt').innerHTML = `${esc(dShort(ST.db.minDay))} – ${esc(dShort(ST.db.maxDay))}<br>${fmt(ST.db.days.length)} วัน · ${fmt(ST.files.length)} ไฟล์${lastSyncTxt()}`;
+  if ($('sideStatTxt')) $('sideStatTxt').innerHTML = `${esc(dShort(ST.db.minDay))} – ${esc(dShort(ST.db.maxDay))}<br>${fmt(ST.db.days.length)} วัน · ${fmt(ST.files.length)} ไฟล์${lastSyncTxt()}`;
 }
 
 // ---------- นำเข้าไฟล์จากเครื่อง ----------
@@ -1453,7 +1544,7 @@ async function syncDriveRun(manual) {
     const fromDay = syncFromDay(), from = LPR.iso(fromDay).replace(/-/g, '');
     $('impTxt').textContent = 'กำลังค้นไฟล์ใน Google Drive ตั้งแต่ ' + dShort(fromDay) + ' (ครั้งแรกอาจใช้ 10–40 วินาที)…';
     const ls = await api({ action: 'list', from }, 180000);
-    if (+ls.version !== BACKEND_VERSION) toast(`Apps Script เป็นเวอร์ชัน ${ls.version} แต่แอปต้องการ ${BACKEND_VERSION} — Deploy Code_LPR_v${BACKEND_VERSION}.gs เป็น New version`, 'warn', 8000);
+    if (+ls.version < BACKEND_VERSION && manual) toast(`Apps Script ยังเป็นเวอร์ชัน ${ls.version} — Deploy Code_LPR_v${BACKEND_VERSION}.gs (New version) เพื่อใช้รายชื่อร่วมทุกเครื่องและชุดข้อมูลล่วงหน้า · ข้อมูลยังดึงได้ตามปกติ`, 'warn', 9000);
     const have = new Map(ST.files.map((f) => [f.key, f]));
     // ชื่อไฟล์ซ้ำกันใน Drive (สำเนาอยู่หลายโฟลเดอร์) → ใช้ไฟล์ที่แก้ไขล่าสุดไฟล์เดียว ไม่งั้นจะสลับดึงกันไปมาทุกครั้งที่ซิงค์
     const byKey = new Map(), relink = []; let dupNames = 0;
@@ -1467,6 +1558,27 @@ async function syncDriveRun(manual) {
       return o.remoteId !== f.id || o.updated !== f.updated; });
     for (const o of relink) { try { await IDB.put('files', o); } catch (e) { break; } }
     let done = 0, added = 0; const errs = []; const canGz = typeof DecompressionStream !== 'undefined';
+    // ชุดข้อมูลครึ่งเดือนที่ Apps Script สร้างไว้ทุกคืน: เครื่องใหม่ดึงทีละชุด (~30 ไฟล์) แทนทีละไฟล์ — ใช้เฉพาะไฟล์ที่รหัส+เวลาแก้ไขตรงกับรายการล่าสุดเท่านั้น
+    if (canGz && todo.length >= 6 && +ls.version >= 3) {
+      let idx = null; try { idx = await api({ action: 'bundles' }, 60000); } catch (e) { console.warn('bundles', e); }
+      const want = new Map(todo.map((f) => [f.name, f]));
+      const parts = idx && Array.isArray(idx.parts) ? idx.parts.filter((p) => (p.files || []).filter((x) => { const f = want.get(x.n); return f && f.id === x.i && +f.updated === +x.u; }).length >= 3) : [];
+      for (let pi = 0; pi < parts.length; pi++) {
+        const p = parts[pi];
+        $('impTxt').textContent = `ดาวน์โหลดชุดข้อมูล ${pi + 1}/${parts.length} (${p.key}, ${(p.bytes / 1e6).toFixed(1)} MB)…`; $('impBar').style.width = ((pi / parts.length) * 100).toFixed(1) + '%';
+        try {
+          const r = await api({ action: 'bundle', key: p.key }, 180000);
+          const j = JSON.parse(new TextDecoder().decode(await gunzipB64(r.data)));
+          for (const x of (j.files || [])) {
+            const f = want.get(x.name); if (!f || f.id !== x.id || +f.updated !== +x.updated || typeof x.text !== 'string') continue;
+            const rec = LPR.parseCSV(x.text, f.name);
+            Object.assign(rec, { src: 'drive', remoteId: f.id, updated: f.updated, size: f.size, importedAt: Date.now() });
+            await IDB.put('files', rec); have.set(rec.key, rec); added++; want.delete(x.name);
+          }
+        } catch (e) { console.warn('bundle', p.key, e); if (e.quota) { errs.push(e.message); break; } } // ชุดไหนพัง → ไฟล์ที่เหลือดึงทีละไฟล์ตามปกติ
+      }
+      for (let i = todo.length - 1; i >= 0; i--) if (!want.has(todo[i].name)) todo.splice(i, 1);
+    }
     // ดึงพร้อมกัน 3 ไฟล์: เร็วขึ้นแต่ไม่ชนโควตา Apps Script
     const worker = async () => {
       while (todo.length) {
@@ -1492,6 +1604,7 @@ async function syncDriveRun(manual) {
     if (added) { toast(`ซิงค์สำเร็จ เพิ่ม ${added} ไฟล์`, 'ok'); await rebuild('ซิงค์ ' + added + ' ไฟล์'); notifyTabs('data'); }
     else { updateChip(); if (manual) toast('ข้อมูลเป็นปัจจุบันแล้ว', 'ok'); }
     renderStore();
+    await sharedFetch(!manual);
   } catch (e) {
     $('impTxt').textContent = 'ซิงค์ไม่สำเร็จ: ' + e.message; if (manual) toast(e.message, 'err', 7000); else toast('ซิงค์อัตโนมัติไม่สำเร็จ — ใช้ข้อมูลที่มีในเครื่อง', 'warn');
   } finally { APP_BUSY = false; }
@@ -1520,8 +1633,16 @@ function periodText(type, a, b) {
   return dShort(a) + ' – ' + dShort(b);
 }
 const TYPE_TH = { day: 'รายวัน', week: 'รายสัปดาห์', month: 'รายเดือน', year: 'รายปี', custom: 'กำหนดช่วงเอง' };
+function shiftYear(d) { const o = LPR.ymd(d), y = o.y - 1; const dim = LPR.ymd(LPR.dayNum(o.m === 12 ? y + 1 : y, o.m === 12 ? 1 : o.m + 1, 1) - 1).d; return LPR.dayNum(y, o.m, Math.min(o.d, dim)); }
 function compareFor(a, b) {
-  const type = ST.period.type; const [ca, cb] = LPR.compareRange(type, a, b, ST.db.maxDay);
+  const type = ST.period.type;
+  if (SET.cmpMode === 'yoy') {
+    // เทียบปีก่อน: รายวัน/สัปดาห์ ถอย 364 วัน (วันในสัปดาห์ตรงกัน) · เดือน/ปี/กำหนดเอง ถอยวันที่เดียวกันของปีก่อน · งวดยังไม่จบตัดเท่าที่มีข้อมูล
+    const effB = type === 'day' ? b : Math.min(b, Math.max(a, ST.db.maxDay));
+    const ca = type === 'day' || type === 'week' ? a - 364 : shiftYear(a), cb = type === 'day' || type === 'week' ? effB - 364 : shiftYear(effB);
+    return { a: ca, b: cb, yoy: true, label: 'เทียบ ' + (type === 'day' ? dLong(ca) : dShort(ca) + ' – ' + dShort(cb)) + ' (ช่วงเดียวกันปีก่อน)', curB: effB };
+  }
+  const [ca, cb] = LPR.compareRange(type, a, b, ST.db.maxDay);
   const label = type === 'day' ? 'เทียบ ' + dLong(ca) + ' (วันเดียวกันสัปดาห์ก่อน)' : 'เทียบ ' + dShort(ca) + ' – ' + dShort(cb) + ' (จำนวนวันเท่ากัน)';
   const effB = Math.min(b, Math.max(a, ST.db.maxDay));
   return { a: ca, b: cb, label, curB: type === 'day' ? b : (type === 'custom' ? b : effB) };
@@ -1529,6 +1650,7 @@ function compareFor(a, b) {
 function syncToolbar() {
   const p = ST.period; const db = ST.db;
   document.querySelectorAll('#segType button').forEach((b) => b.classList.toggle('on', b.dataset.type === p.type));
+  document.querySelectorAll('#segCmp button').forEach((b) => b.classList.toggle('on', b.dataset.cmp === SET.cmpMode));
   const show = ['overview', 'repeat', 'dwell', 'quality'].includes(ST.tab) || (ST.tab === 'search' && ST.searchScope === 'period');
   $('toolbar').hidden = !show || !db;
   if (!db) return;
@@ -1557,7 +1679,7 @@ function shiftPeriodUndo(p, dir) {
   else if (p.type === 'month') { const o = LPR.ymd(p.anchor); let y = o.y, m = o.m - dir; if (m < 1) { m = 12; y--; } if (m > 12) { m = 1; y++; } p.anchor = LPR.dayNum(y, m, 1); }
   else if (p.type === 'year') { const o = LPR.ymd(p.anchor); p.anchor = LPR.dayNum(o.y - dir, 1, 1); }
 }
-const PAGE_T = { overview: ['ภาพรวม', 'สรุปรถเข้า–รถเข้าซ้ำ ตามช่วงเวลาที่เลือก'], search: ['ค้นหาทะเบียน', 'ประวัติการผ่านกล้อง LPR ของทะเบียนที่ค้นหา'], repeat: ['รถเข้าซ้ำ', 'อันดับรถที่เข้าใช้บริการซ้ำ ส่งออก CSV ได้'], dwell: ['เวลาจอด', 'ระยะเวลาตั้งแต่เข้าจนออก'], quality: ['คุณภาพข้อมูล', 'ความครบถ้วนของไฟล์และจุดที่ต้องตรวจสอบ'], import: ['นำเข้าข้อมูล', 'จากโฟลเดอร์ในเครื่อง หรือ Google Drive'], settings: ['ตั้งค่า', 'นิยามการนับและการแสดงผล'] };
+const PAGE_T = { watch: ['เฝ้าระวัง', 'ทะเบียนที่ต้องจับตา — แจ้งเตือนเมื่อพบในข้อมูลล่าสุด'], overview: ['ภาพรวม', 'สรุปรถเข้า–รถเข้าซ้ำ ตามช่วงเวลาที่เลือก'], search: ['ค้นหาทะเบียน', 'ประวัติการผ่านกล้อง LPR ของทะเบียนที่ค้นหา'], repeat: ['รถเข้าซ้ำ', 'อันดับรถที่เข้าใช้บริการซ้ำ ส่งออก CSV ได้'], dwell: ['เวลาจอด', 'ระยะเวลาตั้งแต่เข้าจนออก'], quality: ['คุณภาพข้อมูล', 'ความครบถ้วนของไฟล์และจุดที่ต้องตรวจสอบ'], import: ['นำเข้าข้อมูล', 'จากโฟลเดอร์ในเครื่อง หรือ Google Drive'], settings: ['ตั้งค่า', 'นิยามการนับและการแสดงผล'] };
 
 // ---------- RENDER ----------
 // ห่อ render: ถ้าส่วนใดผิดพลาด แสดงแถบแจ้งพร้อมวิธีแก้ แทนหน้าจอค้างครึ่ง ๆ กลาง ๆ
@@ -1575,6 +1697,7 @@ function renderInner() {
   document.querySelectorAll('main > section.page').forEach((s) => { s.hidden = s.id !== 'pg-' + ST.tab; });
   renderSrcWarn();
   if (ST.tab === 'import') { renderStore(); return; }
+  if (ST.tab === 'watch') { renderWatch(); return; }
   if (ST.tab === 'settings') { renderSettings(); return; }
   if (!ST.db) { renderEmpty(); return; }
   unEmpty();
@@ -1586,7 +1709,7 @@ function renderInner() {
   $('periodLabel').textContent = periodText(ST.period.type, a, b);
   const cov = $('covBadge'); cov.hidden = false;
   cov.textContent = 'มีข้อมูล ' + R.nDataDays + '/' + R.calDays + ' วัน'; cov.className = 'cov' + (R.nDataDays < R.calDays ? ' warn' : '');
-  $('cmpLabel').textContent = !P.nDataDays ? 'ไม่มีข้อมูลช่วงก่อนหน้าให้เทียบ' : C.label + (P.nDataDays !== Rc.nDataDays ? ` ⚠ ช่วงเทียบมีข้อมูล ${P.nDataDays} วัน (เทียบเฉพาะค่าเฉลี่ยต่อวัน)` : '');
+  $('cmpLabel').textContent = !P.nDataDays ? (C.yoy ? 'ไม่มีข้อมูลปีก่อนในแอป — ตั้ง "ช่วงข้อมูลที่ดึงจาก Drive" เป็น "ปีนี้ + ปีที่แล้ว" แล้วซิงค์' : 'ไม่มีข้อมูลช่วงก่อนหน้าให้เทียบ') : C.label + (P.nDataDays !== Rc.nDataDays ? ` ⚠ ช่วงเทียบมีข้อมูล ${P.nDataDays} วัน (เทียบเฉพาะค่าเฉลี่ยต่อวัน)` : '');
   if (ST.tab === 'overview') renderOverview(R, P, Rc);
   else if (ST.tab === 'repeat') renderRepeat(R);
   else if (ST.tab === 'dwell') renderDwell(R, P);
@@ -1603,11 +1726,12 @@ function renderEmpty() {
 }
 function unEmpty() { document.querySelectorAll('section.page > .empty').forEach((e) => { const s = e.parentNode; e.remove(); [...s.children].forEach((c) => { if (!c.dataset.keepHidden) c.hidden = false; }); }); }
 function renderSrcWarn() {
-  const el = $('srcWarn'); if (!ST.db || ['import', 'settings'].includes(ST.tab)) { el.innerHTML = ''; return; }
+  const el = $('srcWarn'); if (!ST.db || ['import', 'settings', 'watch'].includes(ST.tab)) { el.innerHTML = ''; return; }
+  const wh = watchHits();
   const n = ST.db.issues.reduce((t, x) => t + x.bad, 0);
   const rg = curRange(), t = todayBKK();
   const partial = rg && rg[0] <= t && rg[1] >= t && ST.db.dayInfo.has(t) && ['overview', 'repeat', 'dwell', 'quality'].includes(ST.tab);
-  el.innerHTML = (partial ? `<div class="banner info"><span>⏳</span><span>ช่วงนี้รวม "วันนี้" ซึ่งยังเก็บข้อมูลไม่ครบวัน — ตัวเลขของวันนี้จะเพิ่มขึ้นเมื่อซิงค์ครั้งถัดไป</span></div>` : '') + (n ? `<div class="banner"><span>⚠️</span><span>ข้อมูลต้นทาง ${fmt(n)} จุด อ่านไม่ได้ (เช่น ไม่มีเวลา) — ระบบข้ามแถวเหล่านี้ <a href="#" onclick="goTab('quality');return false">ดูรายละเอียด</a></span></div>` : '');
+  el.innerHTML = (wh.length && ST.tab === 'overview' ? `<div class="banner err"><span>👁️</span><span>พบทะเบียนเฝ้าระวัง <b>${wh.length}</b> คันในข้อมูลวันล่าสุด (${esc(dShort(ST.db.maxDay))}): ${wh.slice(0, 5).map((w) => '<b>' + esc(w.plate) + '</b> ' + esc(tSec(w.last - w.lastDay * 86400).slice(0, 5)) + ' น.').join(', ')} <a href="#" onclick="goTab('watch');return false">ดูรายละเอียด ›</a></span></div>` : '') + (partial ? `<div class="banner info"><span>⏳</span><span>ช่วงนี้รวม "วันนี้" ซึ่งยังเก็บข้อมูลไม่ครบวัน — ตัวเลขของวันนี้จะเพิ่มขึ้นเมื่อซิงค์ครั้งถัดไป</span></div>` : '') + (n ? `<div class="banner"><span>⚠️</span><span>ข้อมูลต้นทาง ${fmt(n)} จุด อ่านไม่ได้ (เช่น ไม่มีเวลา) — ระบบข้ามแถวเหล่านี้ <a href="#" onclick="goTab('quality');return false">ดูรายละเอียด</a></span></div>` : '');
 }
 function openNearDaily() { $('repMin').value = 'near'; $('repSort').value = 'days'; ST.rep.page = 0; goTab('repeat'); }
 window.openNearDaily = openNearDaily;
@@ -1638,11 +1762,11 @@ const centerText = { id: 'centerText', afterDraw(ch, _a, o) { if (!o || !o.text)
 function logTick(v) { const l = Math.log10(v); return Math.abs(l - Math.round(l)) < 1e-9 ? fmt(v) : ''; }
 function trendSeries(R) {
   // > 62 วัน: รวมเป็นรายเดือน (เฉลี่ยต่อวัน) เพื่อให้อ่านง่าย
-  if (R.daily.length <= 62) return { labels: R.daily.map((d) => dShortNoY(d.day)), neu: R.daily.map((d) => d.neu), ret: R.daily.map((d) => d.ret), same: R.daily.map((d) => d.sameDayRep), unit: 'คัน/วัน', agg: false };
+  if (R.daily.length <= 62) return { labels: R.daily.map((d) => dShortNoY(d.day)), neu: R.daily.map((d) => d.neu), ret: R.daily.map((d) => d.ret), same: R.daily.map((d) => d.sameDayRep), rep: R.daily.map((d) => d.repU), unit: 'คัน/วัน', agg: false };
   const m = new Map();
-  for (const d of R.daily) { const o = LPR.ymd(d.day); const k = o.y * 12 + o.m - 1; let x = m.get(k); if (!x) { x = { k, n: 0, neu: 0, ret: 0, same: 0 }; m.set(k, x); } x.n++; x.neu += d.neu; x.ret += d.ret; x.same += d.sameDayRep; }
+  for (const d of R.daily) { const o = LPR.ymd(d.day); const k = o.y * 12 + o.m - 1; let x = m.get(k); if (!x) { x = { k, n: 0, neu: 0, ret: 0, same: 0 }; m.set(k, x); } x.n++; x.neu += d.neu; x.ret += d.ret; x.same += d.sameDayRep; x.rep = (x.rep || 0) + d.repU; }
   const arr = [...m.values()].sort((a, b) => a.k - b.k);
-  return { labels: arr.map((x) => TH_MS[x.k % 12] + ' ' + String(be(Math.floor(x.k / 12))).slice(2)), neu: arr.map((x) => Math.round(x.neu / x.n)), ret: arr.map((x) => Math.round(x.ret / x.n)), same: arr.map((x) => Math.round(x.same / x.n)), unit: 'เฉลี่ยคัน/วัน', agg: true };
+  return { labels: arr.map((x) => TH_MS[x.k % 12] + ' ' + String(be(Math.floor(x.k / 12))).slice(2)), neu: arr.map((x) => Math.round(x.neu / x.n)), ret: arr.map((x) => Math.round(x.ret / x.n)), same: arr.map((x) => Math.round(x.same / x.n)), rep: arr.map((x) => Math.round((x.rep || 0) / x.n)), unit: 'เฉลี่ยคัน/วัน', agg: true };
 }
 
 // ----- Overview -----
@@ -1671,6 +1795,8 @@ function kpiCard(c, ic, lb, v, unit, sub, o) {
   const C1 = { '#ec4899': '#f9a8d4', '#3b82f6': '#93c5fd', '#8b5cf6': '#c4b5fd', '#f59e0b': '#fcd34d', '#10b981': '#6ee7b7', '#06b6d4': '#67e8f9', '#e11d48': '#fda4af' };
   return `<div class="kpi${sp ? ' has-spark' : ''}" style="--c:${c};--c1:${o.c1 || C1[c] || '#f9a8d4'}"><div class="top"><span class="ic">${ic}</span>${pill(o.d, o.pp)}</div><div class="v num">${v}${unit ? `<small>${esc(unit)}</small>` : ''}</div><div class="lb">${esc(lb)}</div><div class="s">${sub || ''}</div>${sp}</div>`;
 }
+// ชื่อเรียก "รถเข้าซ้ำ" ตามนิยาม: ช่วง 1 วัน = ซ้ำในวันนั้น · หลายวัน = กลับมาต่างวัน (มา ≥ 2 วัน) — ใช้ร่วมกันทุกจุด
+function repLabel(R, short) { return R.repeatMode === 'sameDay' ? (short ? 'รถเข้าซ้ำ' : 'รถเข้าซ้ำในวันเดียวกัน') : (short ? 'รถกลับมาซ้ำ' : 'รถกลับมาซ้ำ (มา ≥ 2 วัน)'); }
 function kpiData(R, P, Rc) {
   // ทุกค่าใน KPI บนจอ = ค่าในรายงาน A4 (ใช้ฟังก์ชันนี้ร่วมกัน)
   const hasP = P && P.nDataDays > 0;
@@ -1679,12 +1805,13 @@ function kpiData(R, P, Rc) {
   const retShare = R.unique ? R.returning.before / R.unique : null;
   const lbOk = R.returning.lookbackDataDays > 0, lbFull = R.returning.lookbackDataDays >= R.returning.lookbackDays;
   const sV = day ? R.hourly : R.daily.map((d) => d.visits), sU = day ? R.hourly : R.daily.map((d) => d.unique);
-  const sR = day ? R.hourlyRep : R.daily.map((d) => d.sameDayRep), sRate = day ? null : R.daily.map((d) => (d.unique ? d.sameDayRep / d.unique : null));
+  const sd = R.repeatMode === 'sameDay';
+  const sR = sd ? R.hourlyRep : R.daily.map((d) => d.repU), sRate = sd ? null : R.daily.map((d) => (d.unique ? d.repU / d.unique : null));
   return [
     { c: '#ec4899', c1: '#f9a8d4', ic: IC.car, lb: 'รถเข้า (หลังตัดอ่านซ้ำ)', v: fmt(R.visits), u: 'ครั้ง', s: day ? 'อ่านดิบ ' + fmt(R.raw) + ' รายการ' : 'เฉลี่ย ' + fmt(R.avgVisitsPerDay) + ' ครั้ง/วัน', d: hasP ? chgPlain(Rc.avgVisitsPerDay, P.avgVisitsPerDay) : null, spark: sV, prev: hasP ? fmt(P.avgVisitsPerDay) + '/วัน' : '-', cur: fmt(R.avgVisitsPerDay) + '/วัน', key: 'รถเข้าเฉลี่ยต่อวัน' },
     { c: '#3b82f6', c1: '#93c5fd', ic: IC.id, lb: 'รถทั้งหมด (ไม่ซ้ำทะเบียน)', v: fmt(R.unique), u: 'คัน', s: day ? 'ลูกค้าที่นับได้ในวันนี้' : 'เฉลี่ย ' + fmt(R.avgUniquePerDay) + ' คัน/วัน', d: eq ? chgPlain(Rc.unique, P.unique) : null, spark: sU, prev: eq ? fmt(P.unique) : '-', cur: fmt(R.unique), key: 'จำนวนรถ (คัน)' },
-    { c: '#8b5cf6', c1: '#c4b5fd', ic: IC.rep, lb: day ? 'รถเข้าซ้ำในวันเดียวกัน' : 'รถเข้าซ้ำ (≥ 2 ครั้ง)', v: fmt(R.repeat), u: 'คัน', s: day ? 'เข้ารวม ' + fmt(R.repeatVisits) + ' ครั้ง' : 'มาต่างวัน ' + fmt(R.multiDay) + ' · ซ้ำวันเดียว ' + fmt(R.sameDayRep), d: eq ? chgPlain(Rc.repeat, P.repeat) : null, spark: sR, prev: eq ? fmt(P.repeat) : '-', cur: fmt(R.repeat), key: 'รถเข้าซ้ำ (คัน)' },
-    { c: '#f59e0b', c1: '#fcd34d', ic: IC.pct, lb: 'อัตราเข้าซ้ำ', v: pctS(R.repeatRate).replace('%', ''), u: '%', s: 'ของรถทั้งหมดในช่วงนี้', d: eq ? chgPlain(Rc.repeatRate, P.repeatRate, 'pp') : null, pp: true, spark: sRate, prev: eq ? pctS(P.repeatRate) : '-', cur: pctS(R.repeatRate), key: 'อัตราเข้าซ้ำ' },
+    { c: '#8b5cf6', c1: '#c4b5fd', ic: IC.rep, lb: repLabel(R), v: fmt(R.repeat), u: 'คัน', s: sd ? 'เข้ารวม ' + fmt(R.repeatVisits) + ' ครั้ง' : 'มาเฉลี่ย ' + fmt1(R.repeatAvgDays) + ' วัน/คัน · ไม่นับเข้า-ออกหลายรอบในวันเดียว', d: eq ? chgPlain(Rc.repeat, P.repeat) : null, spark: sR, prev: eq ? fmt(P.repeat) : '-', cur: fmt(R.repeat), key: repLabel(R, true) + ' (คัน)' },
+    { c: '#f59e0b', c1: '#fcd34d', ic: IC.pct, lb: 'อัตราเข้าซ้ำ', v: pctS(R.repeatRate).replace('%', ''), u: '%', s: sd ? 'ของรถทั้งหมดในวันนี้' : 'ของรถทั้งหมด ที่กลับมาต่างวัน', d: eq ? chgPlain(Rc.repeatRate, P.repeatRate, 'pp') : null, pp: true, spark: sRate, prev: eq ? pctS(P.repeatRate) : '-', cur: pctS(R.repeatRate), key: 'อัตราเข้าซ้ำ' },
     { c: '#10b981', c1: '#6ee7b7', ic: IC.heart, lb: 'ลูกค้าเก่า (เคยมาใน ' + R.returning.lookbackDays + ' วัน)', v: lbOk ? fmt(R.returning.before) : '-', u: lbOk ? 'คัน' : '', s: !lbOk ? 'ไม่มีข้อมูลก่อนช่วงนี้ให้ตรวจ' : pctS(retShare) + (lbFull ? ' ของรถทั้งหมด' : ' · ย้อนหลังมี ' + R.returning.lookbackDataDays + '/' + R.returning.lookbackDays + ' วัน'), d: null, spark: day ? null : R.daily.map((d) => d.ret), prev: '-', cur: lbOk ? fmt(R.returning.before) + ' (' + pctS(retShare) + ')' : '-', key: 'ลูกค้าเก่า (คัน)' },
     { c: '#06b6d4', c1: '#67e8f9', ic: IC.clock, lb: 'เวลาจอดเฉลี่ย', v: durTxt(R.dwellAvg), u: '', s: 'มัธยฐาน ' + durTxt(R.dwellMedian) + ' · จับคู่ได้ ' + pctS(R.dwellRate), d: hasP ? chgPlain(R.dwellAvg, P.dwellAvg) : null, spark: R.dwellByHour.map((v, h) => (R.dwellByHourN[h] >= 5 ? v : null)), prev: hasP ? durTxt(P.dwellAvg) : '-', cur: durTxt(R.dwellAvg), key: 'เวลาจอดเฉลี่ย' }
   ];
@@ -1699,8 +1826,8 @@ function renderOverview(R, P, Rc) {
     chart('chTrend', { type: 'bar', data: { labels: T.labels, datasets: [
       { label: 'ลูกค้าเก่า (เคยมาใน ' + R.returning.lookbackDays + ' วัน)', data: T.ret, backgroundColor: fillGrad('#a78bfa', '#8b5cf6'), stack: 's', borderRadius: 6, order: 2, maxBarThickness: 46 },
       { label: 'มาครั้งแรก (ในข้อมูลที่มี)', data: T.neu, backgroundColor: fillGrad('#fbcfe8', '#f9a8d4'), stack: 's', borderRadius: 6, order: 2, maxBarThickness: 46 },
-      { label: 'เข้าซ้ำในวันเดียวกัน', data: T.same, type: 'line', borderColor: lineGrad(['#ec4899', '#8b5cf6', '#3b82f6']), backgroundColor: '#3b82f6', pointBackgroundColor: '#fff', pointBorderColor: '#8b5cf6', pointBorderWidth: 2, yAxisID: 'y1', tension: .4, pointRadius: 4, borderWidth: 3, order: 1 }] },
-      options: { interaction: { mode: 'index', intersect: false }, scales: { x: { stacked: true, grid: { display: false } }, y: { stacked: true, beginAtZero: true, title: { display: true, text: 'คัน' } }, y1: { position: 'right', beginAtZero: true, grid: { display: false }, title: { display: true, text: 'ซ้ำ (คัน)' } } } } });
+      { label: 'รถกลับมาซ้ำที่มาในวันนั้น (แกนขวา)', data: T.rep, type: 'line', borderColor: lineGrad(['#ec4899', '#8b5cf6', '#3b82f6']), backgroundColor: '#3b82f6', pointBackgroundColor: '#fff', pointBorderColor: '#8b5cf6', pointBorderWidth: 2, yAxisID: 'y1', tension: .4, pointRadius: 4, borderWidth: 3, order: 1 }] },
+      options: { interaction: { mode: 'index', intersect: false }, scales: { x: { stacked: true, grid: { display: false } }, y: { stacked: true, beginAtZero: true, title: { display: true, text: 'คัน' } }, y1: { position: 'right', beginAtZero: true, grid: { display: false }, title: { display: true, text: 'กลับมาซ้ำ (คัน)' } } } } });
   } else {
     $('trendTitle').firstChild.textContent = 'รถเข้ารายชั่วโมง: ทั้งหมด เทียบรถที่เข้าซ้ำ ';
     $('trendSub').textContent = 'ครั้ง';
@@ -1738,7 +1865,8 @@ function insights(R, P, Rc) {
   const out = []; const day = ST.period.type === 'day'; const hasP = P && P.nDataDays > 0; const eq = hasP && P.nDataDays === Rc.nDataDays;
   if (!R.nDataDays) return [{ e: '📭', c: '#64748b', t: 'ไม่มีไฟล์ข้อมูลในช่วงนี้' }];
   if (!R.visits) return [{ e: '📭', c: '#64748b', t: 'ไม่มีรถเข้าที่นับเป็นลูกค้าในช่วงนี้' }];
-  out.push({ e: '🔁', c: '#8b5cf6', t: `รถเข้าซ้ำ <b>${fmt(R.repeat)}</b> คัน จาก ${fmt(R.unique)} คัน (<b>${pctS(R.repeatRate)}</b>)` + (eq ? ` ${chg(Rc.repeatRate, P.repeatRate, 'pp')} เทียบช่วงก่อน` : '') });
+  out.push({ e: '🔁', c: '#8b5cf6', t: `${repLabel(R)} <b>${fmt(R.repeat)}</b> คัน จาก ${fmt(R.unique)} คัน (<b>${pctS(R.repeatRate)}</b>)` + (eq ? ` ${chg(Rc.repeatRate, P.repeatRate, 'pp')} เทียบช่วงก่อน` : '') });
+  if (R.repeatMode === 'multiDay' && R.sameDayRep) out.push({ e: '🔄', c: '#06b6d4', t: `เข้า-ออกหลายรอบในวันเดียว <b>${fmt(R.sameDayRep)}</b> คัน — ไม่นับเป็น "กลับมาซ้ำ" (ดูเป็นข้อมูลประกอบ)` });
   if (!day) {
     const loyal = R.freqDays.slice(3).reduce((t, x) => t + x.count, 0);
     if (loyal) out.push({ e: '⭐', c: '#f59e0b', t: `ลูกค้าประจำ (มา ≥ 5 วันในช่วงนี้) <b>${fmt(loyal)}</b> คัน` });
@@ -1761,14 +1889,344 @@ function insights(R, P, Rc) {
   return out;
 }
 
+// ===================================================================
+// รายชื่อร่วมบน Google Drive: "ไม่นับเป็นลูกค้า" + "เฝ้าระวัง" (Code_LPR_v3.gs)
+// แก้ในเครื่องทันที → ส่งขึ้น Drive · ส่งไม่ได้ → เก็บคิว ส่งเองรอบหน้า · Drive เป็นต้นฉบับ (ทุกเครื่องเห็นชุดเดียวกัน)
+// ===================================================================
+ST.shared = { available: false, checked: false, rev: 0, pinRequired: false, old: false };
+function pinGet() { try { return sessionStorage.getItem('lpr_pin') || ''; } catch (e) { return ''; } }
+function pinSet(v) { try { if (v) sessionStorage.setItem('lpr_pin', v); else sessionStorage.removeItem('lpr_pin'); } catch (e) {} }
+function applyShared(r) {
+  ST.shared = { available: true, checked: true, rev: +r.rev || 0, pinRequired: !!r.pinRequired, updated: +r.updated || 0, old: false };
+  const st = (r.staff || []).map(LPR.normPlate).filter((p) => p.length >= 2);
+  const changed = JSON.stringify(st) !== JSON.stringify(SET.staffPlates || []);
+  SET.staffPlates = st;
+  SET.watch = (r.watch || []).filter((w) => w && w.plate).map((w) => ({ plate: LPR.normPlate(w.plate), note: String(w.note || '').slice(0, 80), at: +w.at || 0 }));
+  saveSettings(); if (changed) ST.cache.clear();
+  return changed;
+}
+// แบ่งรายการให้ URL ไม่ยาวเกิน (~1,400 ตัวอักษรหลังเข้ารหัส — อักษรไทย 1 ตัวกลายเป็น 9 ตัวใน URL)
+function chunkItems(items) {
+  const out = []; let cur = [];
+  for (const it of items) { cur.push(it); if (encodeURIComponent(JSON.stringify(cur)).length > 1400 && cur.length > 1) { cur.pop(); out.push(cur); cur = [it]; } }
+  if (cur.length) out.push(cur); return out;
+}
+async function sharedCall(kind, op, items) {
+  for (const ch of chunkItems(items)) {
+    let tries = 0;
+    for (;;) {
+      try { applyShared(await api({ action: 'sharedOp', kind, op, items: JSON.stringify(ch), pin: pinGet() }, 30000)); break; }
+      catch (e) {
+        if (/PIN/.test(e.message) && tries++ < 2) {
+          const p = await promptBox(tries > 1 ? 'PIN ไม่ถูกต้อง — ลองอีกครั้ง' : 'ใส่รหัส PIN สำหรับแก้ไขรายชื่อร่วม', 'รหัสตั้งไว้ใน Apps Script (ADMIN_PIN) · ขอจากผู้ดูแลระบบ');
+          if (p == null) { const x = new Error('ยกเลิก — ไม่ได้ใส่ PIN'); x.cancel = true; throw x; }
+          pinSet(p); continue;
+        }
+        throw e;
+      }
+    }
+  }
+}
+function queueOp(kind, op, items) { SET.pendingOps = (SET.pendingOps || []).concat([{ kind, op, items }]).slice(-200); saveSettings(); }
+async function sharedChange(kind, op, items) {
+  if (!items.length || !SET.gasUrl) return;
+  if (ST.shared.old) return; // Apps Script เวอร์ชันเก่า → เก็บในเครื่องอย่างเดียว
+  if (!ST.shared.available || navigator.onLine === false) { queueOp(kind, op, items); refreshSharedUI(); return; }
+  try { await sharedCall(kind, op, items); refreshSharedUI(); notifyTabs('settings'); }
+  catch (e) {
+    if (e.cancel || /PIN|ไม่ถูกต้อง|เกิน/.test(e.message)) { toast('บันทึกขึ้น Drive ไม่สำเร็จ: ' + e.message + ' — ดึงรายชื่อจาก Drive กลับมา', 'err', 7000); await sharedFetch(true); return; }
+    queueOp(kind, op, items); refreshSharedUI(); toast('ยังส่งรายชื่อขึ้น Drive ไม่ได้ (' + e.message + ') — เก็บไว้ส่งอัตโนมัติรอบหน้า', 'warn', 7000);
+  }
+}
+async function sharedFetch(silent) {
+  if (!SET.gasUrl || navigator.onLine === false) return;
+  let r;
+  try { r = await api({ action: 'shared' }, 30000); }
+  catch (e) {
+    if (/ไม่รู้จักคำสั่ง/.test(e.message)) { ST.shared = { available: false, checked: true, old: true }; refreshSharedUI(); }
+    else if (!silent) toast('อ่านรายชื่อร่วมจาก Drive ไม่ได้: ' + e.message, 'warn');
+    return;
+  }
+  ST.shared.available = true; ST.shared.checked = true; ST.shared.old = false;
+  const before = JSON.stringify([SET.staffPlates, SET.watch]);
+  // 1) ส่งคิวที่ค้าง (add/remove ซ้ำได้ผลเหมือนเดิม จึงส่งซ้ำได้ปลอดภัย)
+  let flushed = true;
+  while ((SET.pendingOps || []).length) {
+    const o = SET.pendingOps[0];
+    try { await sharedCall(o.kind, o.op, o.items); SET.pendingOps.shift(); saveSettings(); }
+    catch (e) { flushed = false; if (!silent) toast('ส่งรายชื่อที่ค้างไม่สำเร็จ: ' + e.message, 'warn'); break; }
+  }
+  if (flushed) {
+    // 2) ย้ายรายชื่อเดิมในเครื่อง (v5–v9) ขึ้น Drive ครั้งแรกครั้งเดียว
+    const localStaff = (SET.staffPlates || []).slice(), localWatch = (SET.watch || []).slice();
+    if (!SET.staffMigrated && !(r.staff || []).length && !(r.watch || []).length && (localStaff.length || localWatch.length)) {
+      try {
+        if (localStaff.length) await sharedCall('staff', 'add', localStaff);
+        if (localWatch.length) await sharedCall('watch', 'add', localWatch);
+        toast('ย้ายรายชื่อในเครื่องขึ้น Drive แล้ว (' + fmt(localStaff.length) + ' ไม่นับ · ' + fmt(localWatch.length) + ' เฝ้าระวัง) — ใช้ร่วมทุกเครื่อง', 'ok', 6000);
+      } catch (e) { toast('ย้ายรายชื่อขึ้น Drive ไม่สำเร็จ: ' + e.message, 'warn'); }
+    } else if (!(SET.pendingOps || []).length) applyShared((await api({ action: 'shared' }, 30000).catch(() => r)) || r);
+    SET.staffMigrated = true; saveSettings();
+  }
+  refreshSharedUI();
+  if (JSON.stringify([SET.staffPlates, SET.watch]) !== before) { ST.cache.clear(); if (ST.db) render(); }
+  checkWatchAlerts();
+}
+function refreshSharedUI() {
+  const h = $('staffSyncHint'), pend = (SET.pendingOps || []).length;
+  const txt = !SET.gasUrl ? 'เก็บในเครื่องนี้เท่านั้น (ยังไม่ได้เชื่อม Apps Script)'
+    : ST.shared.old ? '⚠ Apps Script ยังเป็นเวอร์ชันเก่า — รายชื่อเก็บในเครื่องนี้เท่านั้น · Deploy Code_LPR_v3.gs เพื่อใช้ร่วมทุกเครื่อง'
+    : ST.shared.available ? '☁️ ใช้ร่วมทุกเครื่องผ่าน Google Drive' + (ST.shared.updated ? ' · ปรับปรุงล่าสุด ' + absTxtMs(ST.shared.updated) : '') + (ST.shared.pinRequired ? ' · ต้องใช้ PIN แก้ไข' : '') + (pend ? ' · ⏳ รอส่ง ' + pend + ' รายการ' : '')
+    : 'กำลังตรวจการเชื่อมต่อ Drive…' + (pend ? ' · ⏳ รอส่ง ' + pend + ' รายการ' : '');
+  if (h) h.textContent = txt;
+  if ($('watchHint')) $('watchHint').textContent = txt.replace('ใช้ร่วมทุกเครื่อง', 'รายการเฝ้าระวังใช้ร่วมทุกเครื่อง');
+  renderStaffBox(); if (ST.tab === 'watch') renderWatch();
+}
+function absTxtMs(ms) { const d = new Date(ms + 7 * 3600e3); return pad(d.getUTCDate()) + '/' + pad(d.getUTCMonth() + 1) + '/' + be(d.getUTCFullYear()) + ' ' + pad(d.getUTCHours()) + ':' + pad(d.getUTCMinutes()); }
+// กล่องใส่รหัส (ไม่ใช้ prompt() ของเบราว์เซอร์)
+function promptBox(title, sub) {
+  return new Promise((res) => {
+    const w = document.createElement('div'); w.className = 'modal'; w.style.alignItems = 'center'; w.style.justifyContent = 'center';
+    w.innerHTML = `<form class="card" style="max-width:380px;width:100%"><h3>${esc(title)}</h3><p class="hint">${esc(sub || '')}</p><input class="inp" type="password" inputmode="numeric" autocomplete="off" maxlength="12" required><div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px"><button type="button" class="btn" data-a="0">ยกเลิก</button><button class="btn pri" type="submit">ตกลง</button></div></form>`;
+    const inp = w.querySelector('input'); const done = (v) => { w.remove(); res(v); };
+    w.querySelector('form').addEventListener('submit', (e) => { e.preventDefault(); done(inp.value.trim()); });
+    w.querySelector('[data-a="0"]').addEventListener('click', () => done(null));
+    document.body.appendChild(w); setTimeout(() => inp.focus(), 50);
+  });
+}
+
+// ===== เฝ้าระวังทะเบียน =====
+const WATCH_SEEN = 'lpr_watch_seen';
+function watchHits() {
+  if (!ST.db || !(SET.watch || []).length) return [];
+  if (!ST.watchScan || ST.watchScan.db !== ST.db || ST.watchScan.key !== JSON.stringify(SET.watch)) ST.watchScan = { db: ST.db, key: JSON.stringify(SET.watch), rows: LPR.watchScan(ST.db, SET.watch.map((w) => w.plate), ST.db.maxDay) };
+  return ST.watchScan.rows.filter((r) => r.lastDay === ST.db.maxDay);
+}
+function checkWatchAlerts() {
+  const hits = watchHits(); const b = $('watchBadge'); if (b) { b.hidden = !hits.length; b.textContent = hits.length; }
+  if (!hits.length) return;
+  let seen = []; try { seen = JSON.parse(localStorage.getItem(WATCH_SEEN) || '[]'); } catch (e) {}
+  const fresh = hits.filter((h) => !seen.includes(h.plate + '@' + h.lastDay));
+  if (fresh.length) {
+    toast('👁️ พบทะเบียนเฝ้าระวัง ' + fresh.map((h) => h.plate).slice(0, 4).join(', ') + (fresh.length > 4 ? ' …' : '') + ' ในข้อมูลวันล่าสุด', 'warn', 9000);
+    try { localStorage.setItem(WATCH_SEEN, JSON.stringify(seen.concat(fresh.map((h) => h.plate + '@' + h.lastDay)).slice(-500))); } catch (e) {}
+  }
+  renderSrcWarn();
+}
+function renderWatch() {
+  const list = SET.watch || []; $('watchSub').textContent = fmt(list.length) + ' ทะเบียน';
+  const rows = ST.db ? (watchHits(), ST.watchScan.rows) : list.map((w) => ({ plate: w.plate, last: null }));
+  const note = new Map(list.map((w) => [w.plate, w]));
+  rows.sort((x, y) => (y.last || 0) - (x.last || 0) || x.plate.localeCompare(y.plate));
+  const hits = rows.filter((r) => ST.db && r.lastDay === ST.db.maxDay);
+  $('watchAlert').innerHTML = hits.length ? `<div class="banner err"><span>🚨</span><span>พบ ${hits.length} ทะเบียนในข้อมูลวันล่าสุด (${esc(dLong(ST.db.maxDay))})</span></div>` : '';
+  $('tblWatch').innerHTML = '<thead><tr><th>ทะเบียน</th><th>หมายเหตุ</th><th>เพิ่มเมื่อ</th><th>พบล่าสุด</th><th>ประตู</th><th class="r">มาใน 7 วัน</th><th class="r">มาใน 30 วัน</th><th></th></tr></thead><tbody>' +
+    (rows.length ? rows.map((r) => { const w = note.get(r.plate) || {}; const hot = ST.db && r.lastDay === ST.db.maxDay;
+      return `<tr${hot ? ' style="background:color-mix(in srgb,var(--ro) 10%,transparent)"' : ''}><td><span class="plate">${esc(r.plate)}</span> ${hot ? '<span class="tag ro">พบวันล่าสุด</span>' : ''}</td><td style="white-space:normal;min-width:180px">${esc(w.note || '')}</td><td class="num">${w.at ? absTxtMs(w.at).slice(0, 10) : '-'}</td><td class="num">${r.last ? absTxt(r.last) : '<span class="hint">ไม่พบในข้อมูลที่มี</span>'}</td><td>${esc(r.lastGate || '-')}</td><td class="r num">${r.last ? fmt(r.d7) + ' วัน' : '-'}</td><td class="r num">${r.last ? fmt(r.d30) + ' วัน' : '-'}</td><td class="r" style="white-space:nowrap"><button class="btn sm" data-wview="${esc(r.plate)}">ประวัติ</button> <button class="btn sm danger" data-wdel="${esc(r.plate)}">ลบ</button></td></tr>`; }).join('')
+      : '<tr><td colspan="8" class="c" style="padding:22px">ยังไม่มีทะเบียนเฝ้าระวัง — เพิ่มได้ด้านบน หรือจากหน้า "ค้นหาทะเบียน"</td></tr>') + '</tbody>';
+}
+async function watchAdd(plate, noteTxt) {
+  const p = LPR.normPlate(plate); if (!/^[ก-ฮ0-9A-Z]{2,12}$/.test(p)) throw new Error('รูปแบบทะเบียนไม่ถูกต้อง (ใช้ตัวอักษรไทย/ตัวเลข 2–12 ตัว)');
+  const nt = String(noteTxt || '').trim().slice(0, 80);
+  const ex = (SET.watch || []).find((w) => w.plate === p);
+  if (ex) ex.note = nt || ex.note; else SET.watch = (SET.watch || []).concat([{ plate: p, note: nt, at: Date.now() }]);
+  saveSettings(); ST.watchScan = null; renderWatch(); checkWatchAlerts();
+  await sharedChange('watch', 'add', [{ plate: p, note: nt }]); return p;
+}
+async function watchDel(p) {
+  SET.watch = (SET.watch || []).filter((w) => w.plate !== p); saveSettings(); ST.watchScan = null; renderWatch(); checkWatchAlerts();
+  await sharedChange('watch', 'remove', [p]);
+}
+window.goTab = goTab;
+
+// ===== โปรไฟล์ทะเบียน (หน้าค้นหา) =====
+function heatColor(n) { return n <= 0 ? '' : n === 1 ? '#fbcfe8' : n === 2 ? '#f472b6' : '#be185d'; }
+function calendarHtml(P, months) {
+  // ปฏิทินรายเดือน: สีเข้ม = มาหลายครั้งในวันนั้น · เทา = วันไม่มีข้อมูล (ไม่รู้ ≠ ไม่มา)
+  return months.map(([y, m]) => {
+    const first = LPR.dayNum(y, m, 1), dim = LPR.ymd(LPR.dayNum(m === 12 ? y + 1 : y, m === 12 ? 1 : m + 1, 1) - 1).d, lead = (LPR.ymd(first).w + 6) % 7;
+    let cells = '<div class="cal-h">จ</div><div class="cal-h">อ</div><div class="cal-h">พ</div><div class="cal-h">พฤ</div><div class="cal-h">ศ</div><div class="cal-h">ส</div><div class="cal-h">อา</div>' + '<div></div>'.repeat(lead);
+    for (let d = 1; d <= dim; d++) {
+      const dn = first + d - 1, n = P.byDay.get(dn) || 0, has = LPR.isDataDay(ST.db.dayInfo.get(dn));
+      cells += `<div class="cal-d${has ? '' : ' nod'}" style="${n ? 'background:' + heatColor(n) + ';color:' + (n >= 2 ? '#fff' : '#831843') : ''}" title="${dNum(dn)}${has ? ' · ' + n + ' ครั้ง' : ' · ไม่มีข้อมูล'}">${d}</div>`;
+    }
+    return `<div class="cal"><div class="cal-t">${TH_M[m - 1]} ${be(y)}</div><div class="cal-g">${cells}</div></div>`;
+  }).join('');
+}
+function profileMonths(P) {
+  const end = LPR.ymd(Math.min(P.b, ST.db.maxDay)), start = LPR.ymd(Math.max(P.a, ST.db.minDay)); const out = [];
+  let y = end.y, m = end.m;
+  while (out.length < 6 && (y > start.y || (y === start.y && m >= start.m))) { out.unshift([y, m]); m--; if (m < 1) { m = 12; y--; } }
+  return out;
+}
+function profileHtml(P) {
+  const hMax = Math.max(1, ...P.hourly), wdN = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
+  const isStaff = staffSet().has(P.plate), isWatch = (SET.watch || []).some((w) => w.plate === P.plate);
+  return `<div class="card" style="margin-top:14px"><h3>📇 ประวัติทะเบียน <span class="plate ${P.valid ? '' : 'bad'}">${esc(P.plate)}</span>${isStaff ? '<span class="tag mute">ไม่นับเป็นลูกค้า</span>' : ''}${isWatch ? '<span class="tag ro">เฝ้าระวัง</span>' : ''}
+    <span class="sub">${esc(dShort(Math.max(P.a, ST.db.minDay)))} – ${esc(dShort(Math.min(P.b, ST.db.maxDay)))}</span></h3>
+    <div class="grid g-kpi">
+      ${kpiCard('#ec4899', IC.car, 'เข้า (ครั้ง)', fmt(P.visits), 'ครั้ง', 'ออก ' + fmt(P.exits) + ' ครั้ง' + (P.dup ? ' · อ่านซ้ำตัดออก ' + fmt(P.dup) : ''))}
+      ${kpiCard('#8b5cf6', IC.rep, 'จำนวนวันที่มา', fmt(P.days), 'วัน', P.days >= 2 ? 'กลับมาซ้ำ' : 'มาวันเดียว')}
+      ${kpiCard('#06b6d4', IC.clock, 'จอดเฉลี่ย', durTxt(P.dwellAvg), '', 'จับคู่เข้า–ออกได้ ' + fmt(P.dwellN) + ' ครั้ง')}
+      ${kpiCard('#10b981', IC.id, 'ล่าสุด', P.last ? absTxt(P.last).slice(0, 10) : '-', '', P.last ? 'เวลา ' + absTxt(P.last).slice(11) + ' น. · ' + esc(P.lastGate) : '')}
+    </div>
+    <div class="grid g-2" style="margin-top:14px">
+      <div><div class="hint" style="margin-bottom:6px">ปฏิทินการมา (สีเข้ม = มาหลายครั้งในวันนั้น · เทา = วันไม่มีข้อมูล)</div><div class="cal-wrap">${calendarHtml(P, profileMonths(P))}</div></div>
+      <div>
+        <div class="hint" style="margin-bottom:6px">ชั่วโมงที่เข้า</div>
+        <div class="hrs">${P.hourly.map((v, h) => `<div title="${pad(h)}:00 · ${v} ครั้ง"><i style="height:${Math.round((v / hMax) * 100)}%"></i><span>${h % 3 === 0 ? pad(h) : ''}</span></div>`).join('')}</div>
+        <div class="hint" style="margin:10px 0 4px">วันในสัปดาห์</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">${[1, 2, 3, 4, 5, 6, 0].map((w) => `<span class="tag ${P.weekday[w] ? 'pk' : 'mute'}">${wdN[w]} ${P.weekday[w]}</span>`).join('')}</div>
+        <div class="hint" style="margin:10px 0 4px">ประตู · จังหวัด · กลุ่ม</div>
+        <div style="font-size:14px">${P.gates.map((g) => esc(g.name) + ' ' + g.count).join(' · ') || '-'}<br>${P.provs.map((g) => esc(g.name)).join(', ') || '-'} · ${P.groups.map((g) => esc(g.name)).join(', ') || '-'}${P.memo ? '<br><span class="hint">' + esc(P.memo) + '</span>' : ''}</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;justify-content:flex-end">
+      <button class="btn sm" data-staff-toggle="${esc(P.plate)}">${isStaff ? '✅ กลับมานับเป็นลูกค้า' : '🚫 ไม่นับเป็นลูกค้า'}</button>
+      <button class="btn sm" data-watch-toggle="${esc(P.plate)}">${isWatch ? '👁️ เลิกเฝ้าระวัง' : '👁️ เพิ่มเฝ้าระวัง'}</button>
+      <button class="btn sm pri" data-profile-print="${esc(P.plate)}">🖨️ พิมพ์ A4</button>
+    </div></div>`;
+}
+function profilePage(P) {
+  const now = nowBKK(), logo = document.querySelector('.brand img').src, months = profileMonths(P);
+  const docNo = 'RPT-PLATE-' + now.getFullYear() + pad(now.getMonth() + 1) + pad(now.getDate()) + '-' + pad(now.getHours()) + pad(now.getMinutes());
+  const hMax = Math.max(1, ...P.hourly);
+  const cal = months.map(([y, m]) => {
+    const first = LPR.dayNum(y, m, 1), dim = LPR.ymd(LPR.dayNum(m === 12 ? y + 1 : y, m === 12 ? 1 : m + 1, 1) - 1).d, lead = (LPR.ymd(first).w + 6) % 7;
+    let c = ['จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส', 'อา'].map((x) => `<td style="font-size:9.5px;color:#6b6f8f;text-align:center;padding:0;border:0">${x}</td>`).join('');
+    let row = '<tr>' + '<td style="border:0"></td>'.repeat(lead), col = lead, rows = '<tr>' + c + '</tr>';
+    for (let d = 1; d <= dim; d++) { const dn = first + d - 1, n = P.byDay.get(dn) || 0, has = LPR.isDataDay(ST.db.dayInfo.get(dn)); row += `<td style="text-align:center;padding:1px 0 3px;font-size:10.5px;border:1px solid #f3e8ff;background:${n ? heatColor(n) : has ? '#ffffff' : '#e5e7eb'};color:${n >= 2 ? '#ffffff' : '#1e1b4b'}">${d}</td>`; col++; if (col === 7) { rows += row + '</tr>'; row = '<tr>'; col = 0; } }
+    if (col) rows += row + '<td style="border:0"></td>'.repeat(7 - col) + '</tr>';
+    return `<div><div style="font-family:Prompt;font-weight:700;font-size:12px;color:#4c1d95;margin-bottom:2px">${TH_M[m - 1]} ${be(y)}</div><table style="width:100%">${rows}</table></div>`;
+  }).join('');
+  return `<div class="a4"><div class="rh"><img src="${logo}" alt=""><div><div class="tt">รายงานประวัติทะเบียนรถ (LPR)</div><div class="st">${esc(SET.org)} · ทะเบียน ${esc(P.plate)} · ${dShort(Math.max(P.a, ST.db.minDay))} – ${dShort(Math.min(P.b, ST.db.maxDay))}</div></div><div class="meta">เลขที่ ${docNo}<br>จัดทำ ${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${be(now.getFullYear())} ${pad(now.getHours())}:${pad(now.getMinutes())} น.<br>ข้อมูล ณ วันที่ ${dShort(ST.db.maxDay)}</div></div>
+  <div class="rb">
+    <div class="kr" style="grid-template-columns:repeat(5,1fr)">
+      <div class="kb" style="border-top-color:#ec4899"><div class="l">ทะเบียน</div><div class="v" style="font-size:20px"><span class="pl">${esc(P.plate)}</span></div><div class="s">${esc(P.provs.map((x) => x.name).join(', ') || '-')}</div></div>
+      <div class="kb" style="border-top-color:#8b5cf6"><div class="l">เข้า (ครั้ง)</div><div class="v">${fmt(P.visits)}</div><div class="s">ออก ${fmt(P.exits)} ครั้ง</div></div>
+      <div class="kb" style="border-top-color:#3b82f6"><div class="l">จำนวนวันที่มา</div><div class="v">${fmt(P.days)}</div><div class="s">${P.days >= 2 ? 'กลับมาซ้ำ' : 'มาวันเดียว'}</div></div>
+      <div class="kb" style="border-top-color:#06b6d4"><div class="l">จอดเฉลี่ย</div><div class="v" style="font-size:19px">${durTxt(P.dwellAvg)}</div><div class="s">จับคู่ได้ ${fmt(P.dwellN)} ครั้ง</div></div>
+      <div class="kb" style="border-top-color:#10b981"><div class="l">ครั้งแรก / ล่าสุด</div><div class="v" style="font-size:14px;line-height:1.5">${P.first ? absTxt(P.first) : '-'}<br>${P.last ? absTxt(P.last) : '-'}</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1.6fr 1fr;gap:10px;flex:1;min-height:0">
+      <div class="sec"><h4><span class="no">1</span>ปฏิทินการมา <span style="font-weight:400;font-size:11px;color:#6b6f8f">(ชมพูอ่อน 1 ครั้ง · ชมพู 2 ครั้ง · เข้ม ≥ 3 ครั้ง · เทา = ไม่มีข้อมูล)</span></h4><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px 14px">${cal}</div></div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="sec"><h4><span class="no">2</span>ชั่วโมงที่เข้า</h4><div style="display:flex;align-items:flex-end;gap:2px;height:90px">${P.hourly.map((v) => `<div style="flex:1;background:#a855f7;height:${Math.max(v ? 4 : 0, Math.round((v / hMax) * 88))}px;border-radius:2px 2px 0 0"></div>`).join('')}</div><div style="display:flex;justify-content:space-between;font-size:10px;color:#6b6f8f"><span>00</span><span>06</span><span>12</span><span>18</span><span>23</span></div></div>
+        <div class="sec tight"><h4><span class="no">3</span>รายละเอียด</h4><table><tbody>
+          <tr><td>ประตูที่ใช้</td><td>${esc(P.gates.map((g) => g.name + ' (' + g.count + ')').join(', ') || '-')}</td></tr>
+          <tr><td>กลุ่มบัตร</td><td>${esc(P.groups.map((g) => g.name).join(', ') || '-')}</td></tr>
+          <tr><td>วันในสัปดาห์</td><td>${['จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส', 'อา'].map((x, i) => x + ' ' + P.weekday[(i + 1) % 7]).join(' · ')}</td></tr>
+          <tr><td>สถานะในระบบ</td><td>${staffSet().has(P.plate) ? 'ไม่นับเป็นลูกค้า' : 'นับเป็นลูกค้า'}${(SET.watch || []).some((w) => w.plate === P.plate) ? ' · อยู่ในรายการเฝ้าระวัง' : ''}</td></tr>
+          ${P.memo ? `<tr><td>หมายเหตุ (LPR)</td><td class="wrap">${esc(P.memo.slice(0, 60))}</td></tr>` : ''}
+        </tbody></table></div>
+        <div class="note">• นับเฉพาะรายการกล้องขาเข้าหลังตัดอ่านซ้ำ (ภายใน ${SET.dedupMin} นาที) · ปฏิทินแสดงไม่เกิน 6 เดือนล่าสุดของช่วง · เวลาจอด = เข้าถึงออกครั้งแรกของทะเบียนเดียวกัน ไม่เกิน 24 ชม. · ทะเบียนที่กล้องอ่านผิดเป็นตัวอื่นจะไม่รวมในประวัตินี้</div>
+      </div>
+    </div></div><div class="rf"><span>LPR Repeat Analytics v${APP_VERSION} · ${esc(SET.org)}</span><span>สิ้นสุดรายงาน · หน้า 1/1</span></div></div>`;
+}
+function showPages(pages, title, name) {
+  APP_BUSY = true; $('rptModal').hidden = false; $('btnRptSave').hidden = true; ST.rptFiles = null; ST.rptName = name;
+  $('rptAppendix').parentNode.hidden = !!name; // ภาคผนวกใช้กับรายงานสรุปเท่านั้น
+  const body = $('rptBody'); const avail = Math.min(body.clientWidth || window.innerWidth, window.innerWidth) - 24; const sc = Math.min(1, avail / 1123);
+  body.innerHTML = pages.map((p) => `<div class="pg-holder" style="width:${1123 * sc}px;height:${794 * sc}px">${p.replace('class="a4"', `class="a4" style="transform:scale(${sc})"`)}</div>`).join('');
+  $('rptTitle').textContent = title;
+}
+function printProfile(plate) {
+  let a = ST.db.minDay, b = ST.db.maxDay; if (ST.searchScope === 'period') [a, b] = curRange();
+  const P = LPR.plateProfile(ST.db, plate, a, b); if (!P) { toast('ไม่พบทะเบียนนี้ในข้อมูล', 'warn'); return; }
+  try { showPages([profilePage(P)], 'ตัวอย่างรายงานประวัติทะเบียน ' + P.plate, 'LPR_ประวัติทะเบียน_' + P.plate + '_' + LPR.iso(ST.db.maxDay)); }
+  catch (e) { console.error(e); APP_BUSY = false; $('rptModal').hidden = true; toast('สร้างรายงานไม่สำเร็จ: ' + e.message, 'err'); }
+}
+
+// ===== การ์ด LINE =====
+function lineSummary() {
+  const [a, b] = curRange(); const R = getAnalysis(a, b, false), C = compareFor(a, b), P = getAnalysis(C.a, C.b, false), Rc = C.curB < b ? getAnalysis(a, C.curB, false) : R;
+  const hasP = P.nDataDays > 0, eq = hasP && P.nDataDays === Rc.nDataDays;
+  const ph = R.hourly.indexOf(Math.max(...R.hourly)); const g = R.gates.slice().sort((x, y) => y.count - x.count)[0];
+  const dv = hasP ? chgPlain(Rc.avgVisitsPerDay, P.avgVisitsPerDay) : null, dr = eq ? chgPlain(Rc.repeatRate, P.repeatRate, 'pp') : null;
+  const arrowT = (d, pp) => (d == null ? '' : ` (${d > 0 ? '▲' : d < 0 ? '▼' : '•'}${fmt1(Math.abs(d))}${pp ? ' จุด' : '%'})`);
+  const lines = [
+    `📊 สรุป LPR รถเข้าซ้ำ — ${periodText(ST.period.type, a, b)}`,
+    `🏬 ${SET.org}`,
+    ``,
+    `🚗 รถเข้า ${fmt(R.visits)} ครั้ง · ${fmt(R.unique)} คัน` + (ST.period.type === 'day' ? '' : ` (เฉลี่ย ${fmt(R.avgVisitsPerDay)}/วัน)`) + arrowT(dv),
+    `🔁 ${repLabel(R)} ${fmt(R.repeat)} คัน · ${pctS(R.repeatRate)}` + arrowT(dr, true),
+    R.returning.lookbackDataDays ? `💚 ลูกค้าเก่า (มาใน ${R.returning.lookbackDays} วัน) ${fmt(R.returning.before)} คัน` : null,
+    `⏰ หนาแน่นสุด ${pad(ph)}:00–${pad(ph + 1)}:00 น.`,
+    g ? `🚪 ประตูหลัก ${g.name} (${pctS(g.count / Math.max(1, R.visits))})` : null,
+    R.dwellMedian != null ? `🅿️ จอดมัธยฐาน ${durTxt(R.dwellMedian)}` : null,
+    R.nearDaily ? `🕵️ มาเกือบทุกวัน ${fmt(R.nearDaily)} คัน (ควรตรวจว่าเป็นพนักงาน)` : null,
+    watchHits().length ? `👁️ พบทะเบียนเฝ้าระวัง ${watchHits().length} คัน` : null,
+    R.missingDays.length || R.suspectDays.length ? `⚠️ ข้อมูลไม่ครบ ${R.missingDays.length + R.suspectDays.length} วัน` : null,
+    ``,
+    (hasP ? C.label.replace(/^เทียบ /, 'เทียบกับ ') + ' · ' : '') + `ข้อมูล ณ ${dShort(ST.db.maxDay)}`
+  ].filter((x) => x !== null);
+  return { R, P, Rc, C, a, b, text: lines.join('\n'), dv, dr, ph, g };
+}
+function lineCardHtml(S) {
+  const { R } = S; const logo = document.querySelector('.brand img').src;
+  const arrow = (d, pp) => (d == null ? '' : `<span style="font-size:13px;font-weight:700;color:${d > 0 ? '#047857' : d < 0 ? '#be123c' : '#6b6f8f'};background:#ffffff;border-radius:999px;padding:1px 8px 3px;margin-left:6px">${d > 0 ? '▲' : d < 0 ? '▼' : '•'} ${fmt1(Math.abs(d))}${pp ? ' จุด' : '%'}</span>`);
+  const box = (c1, c2, lb, v, u, ex) => `<div style="border-radius:16px;padding:12px 14px 13px;background:linear-gradient(145deg,${c1},${c2});border:1px solid #ffffff"><div style="font-size:13px;font-weight:600;color:#2e2a5a">${lb}</div><div style="font-family:Prompt;font-weight:700;font-size:28px;color:#1e1b4b;line-height:1.25">${v}<span style="font-size:14px;font-weight:500;color:#2e2a5a"> ${u}</span>${ex || ''}</div></div>`;
+  const ins = insights(R, S.P, S.Rc).filter((i) => !/📭/.test(i.e)).slice(0, 5).map((i) => `<div style="display:flex;gap:8px;font-size:13.5px;line-height:1.5;margin-bottom:5px;color:#1e1b4b"><span>${i.e}</span><span>${i.t.replace(/<a [^>]*>[^<]*<\/a>/g, '').replace(/<span class="(up|down|flat)">/g, (m, c) => `<span style="color:${c === 'up' ? '#047857' : c === 'down' ? '#be123c' : '#6b6f8f'};font-weight:700">`)}</span></div>`).join('');
+  return `<div id="lineCard" style="width:540px;height:720px;overflow:hidden;font-family:Sarabun,sans-serif;background:linear-gradient(160deg,#ffe4f3 0%,#f3e8ff 45%,#dbeafe 100%);display:flex;flex-direction:column;border-radius:0">
+    <div style="padding:20px 22px 16px;background:linear-gradient(110deg,#db2777,#9333ea 55%,#2563eb);color:#ffffff;display:flex;gap:12px;align-items:center">
+      <img src="${logo}" style="width:52px;height:52px;border-radius:13px;background:#ffffff" alt="">
+      <div><div style="font-family:Prompt;font-weight:700;font-size:20px;line-height:1.3">สรุปรถเข้าซ้ำ (LPR)</div><div style="font-size:14px;color:#fce7f3">${esc(periodText(ST.period.type, S.a, S.b))}</div></div>
+    </div>
+    <div style="padding:16px 18px 6px;display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      ${box('#f9a8d4', '#fbcfe8', 'รถเข้า', fmt(R.visits), 'ครั้ง', arrow(S.dv))}
+      ${box('#93c5fd', '#bfdbfe', 'รถทั้งหมด', fmt(R.unique), 'คัน')}
+      ${box('#c4b5fd', '#ddd6fe', repLabel(R), fmt(R.repeat), 'คัน')}
+      ${box('#fcd34d', '#fde68a', 'อัตราเข้าซ้ำ', pctS(R.repeatRate).replace('%', ''), '%', arrow(S.dr, true))}
+    </div>
+    <div style="margin:8px 18px 0;padding:12px 14px;border-radius:16px;background:rgba(255,255,255,.78);border:1px solid #ffffff;flex:1;min-height:0">
+      <div style="font-family:Prompt;font-weight:700;font-size:15px;color:#4c1d95;margin-bottom:6px">💡 ข้อสังเกต</div>${ins}
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+        <span style="font-size:13px;padding:2px 10px 4px;border-radius:999px;background:#ede9fe;color:#4c1d95">⏰ ${pad(S.ph)}:00–${pad(S.ph + 1)}:00 น.</span>
+        ${S.g ? `<span style="font-size:13px;padding:2px 10px 4px;border-radius:999px;background:#dbeafe;color:#1e3a8a">🚪 ${esc(S.g.name)}</span>` : ''}
+        ${R.dwellMedian != null ? `<span style="font-size:13px;padding:2px 10px 4px;border-radius:999px;background:#cffafe;color:#155e75">🅿️ ${durTxt(R.dwellMedian)}</span>` : ''}
+      </div>
+    </div>
+    <div style="padding:10px 20px 14px;font-size:12px;color:#4b5072;display:flex;justify-content:space-between"><span>${esc(SET.org)}</span><span>ข้อมูล ณ ${dShort(ST.db.maxDay)}</span></div>
+  </div>`;
+}
+function openLine() {
+  if (!ST.db) { toast('ยังไม่มีข้อมูล', 'warn'); return; }
+  const [a, b] = curRange(); if (!getAnalysis(a, b, false).nDataDays) { toast('ช่วงที่เลือกไม่มีข้อมูล', 'warn'); return; }
+  let S; try { S = lineSummary(); } catch (e) { console.error(e); toast('สร้างการ์ดไม่สำเร็จ: ' + e.message, 'err'); return; }
+  APP_BUSY = true; ST.lineS = S; ST.lineFile = null; $('btnLineShare').hidden = true;
+  const sc = Math.min(1, (window.innerWidth - 32) / 540);
+  $('lineCardHolder').innerHTML = `<div style="width:${540 * sc}px;height:${720 * sc}px;position:relative;box-shadow:0 10px 30px -10px rgba(0,0,0,.5);border-radius:14px;overflow:hidden"><div style="position:absolute;left:0;top:0;transform:scale(${sc});transform-origin:0 0">${lineCardHtml(S)}</div></div>`;
+  $('lineText').value = S.text; $('lineModal').hidden = false;
+}
+function closeLine() { $('lineModal').hidden = true; $('lineCardHolder').innerHTML = ''; APP_BUSY = false; }
+async function copyText(t) {
+  try { await navigator.clipboard.writeText(t); return true; }
+  catch (e) { const ta = $('lineText'); ta.removeAttribute('readonly'); ta.select(); let ok = false; try { ok = document.execCommand('copy'); } catch (x) {} ta.setAttribute('readonly', ''); return ok; }
+}
+async function exportLinePng() {
+  await withBtn($('btnLinePng'), async () => {
+    try {
+      await loadLibs(); await document.fonts.ready;
+      const src = document.getElementById('lineCard'); const clone = src.cloneNode(true);
+      const host = document.createElement('div'); host.style.cssText = 'position:fixed;left:-12000px;top:0'; host.appendChild(clone); document.body.appendChild(host);
+      let cv; try { cv = await html2canvas(clone, { scale: 2, useCORS: true, backgroundColor: '#ffffff', width: 540, height: 720, windowWidth: 540, logging: false }); } finally { host.remove(); }
+      const blob = await new Promise((r) => cv.toBlob(r, 'image/png')); const [a, b] = curRange();
+      const name = `LPR_การ์ดLINE_${LPR.iso(a)}${a !== b ? '_' + LPR.iso(b) : ''}.png`;
+      if (isIOS()) { ST.lineFile = { blob, name }; $('btnLineShare').hidden = false; toast('รูปพร้อมแล้ว — แตะปุ่ม "บันทึก/แชร์รูป" (ข้อจำกัดของ iOS)', 'ok', 6000); }
+      else { downloadBlob(blob, name); toast('บันทึกรูปการ์ดแล้ว (1080×1440)', 'ok'); }
+    } catch (e) { toast('สร้างรูปไม่สำเร็จ: ' + e.message, 'err', 7000); }
+  });
+}
+
 // ----- รายชื่อทะเบียนที่ไม่นับเป็นลูกค้า (พนักงาน/ผู้เช่าที่ยังไม่ลงทะเบียนกลุ่ม) -----
 // เปลี่ยนแค่ตัวกรอง ไม่ต้อง build ใหม่ → ล้างแคชผลวิเคราะห์แล้ววาดใหม่ (เร็ว)
 const staffSet = () => new Set(SET.staffPlates || []);
 function setStaff(plates, on) {
-  const st = staffSet(); let n = 0;
-  plates.map(LPR.normPlate).filter((p) => p.length >= 2).forEach((p) => { if (on && !st.has(p)) { st.add(p); n++; } if (!on && st.delete(p)) n++; });
+  const st = staffSet(); const changed = [];
+  plates.map(LPR.normPlate).filter((p) => p.length >= 2).forEach((p) => { if (on && !st.has(p)) { st.add(p); changed.push(p); } if (!on && st.delete(p)) changed.push(p); });
   SET.staffPlates = [...st].sort(); saveSettings(); ST.cache.clear(); render(); renderStaffBox(); notifyTabs('settings');
-  return n;
+  sharedChange('staff', on ? 'add' : 'remove', changed); // ส่งขึ้น Drive เบื้องหลัง (ไม่บล็อกหน้าจอ)
+  return changed.length;
 }
 function renderStaffBox() {
   const el = $('sStaff'); if (!el) return;
@@ -1779,17 +2237,22 @@ function renderStaffBox() {
 function repRows(R) {
   const q = LPR.normPlate($('repFilter').value), min = +$('repMin').value, sort = $('repSort').value;
   const nd = $('repMin').value === 'near'; // มาเกือบทุกวัน (≥ 80% ของวันที่มีข้อมูล)
-  let rows = (R.top || []).filter((r) => (nd ? R.nearDailyMin != null && r.days >= R.nearDailyMin : r.visits >= min) && (!q || r.plate.indexOf(q) >= 0));
+  const sdm = R.repeatMode === 'sameDay';
+  let rows = (R.top || []).filter((r) => (nd ? R.nearDailyMin != null && r.days >= R.nearDailyMin : (sdm ? r.visits : r.days) >= min) && (!q || r.plate.indexOf(q) >= 0));
   const f = { days: (a, b) => b.days - a.days || b.visits - a.visits, visits: (a, b) => b.visits - a.visits || b.days - a.days, maxDay: (a, b) => b.maxDay - a.maxDay || b.visits - a.visits, last: (a, b) => b.last - a.last, dwell: (a, b) => (b.dwellAvg || 0) - (a.dwellAvg || 0) }[sort];
   return rows.slice().sort(f);
 }
 function renderRepeat(R) {
   const day = ST.period.type === 'day';
+  const sd = R.repeatMode === 'sameDay';
+  // ตัวเลือกกรอง: ช่วง 1 วันกรองตาม "ครั้ง" · หลายวันกรองตาม "วันที่มา" (ตรงกับนิยามรถเข้าซ้ำ)
+  [...$('repMin').options].forEach((o) => { if (o.value !== 'near') o.textContent = 'มาตั้งแต่ ' + o.value + (sd ? ' ครั้ง' : ' วัน'); });
+  $('repMin').querySelector('option[value="near"]').hidden = sd;
   $('repKpis').innerHTML = [
-    kpiCard('#8b5cf6', IC.rep, 'รถเข้าซ้ำ', fmt(R.repeat), 'คัน', pctS(R.repeatRate) + ' ของ ' + fmt(R.unique) + ' คัน'),
-    kpiCard('#ec4899', IC.car, 'ครั้งที่มาจากรถเข้าซ้ำ', fmt(R.repeatVisits), 'ครั้ง', pctS(R.visits ? R.repeatVisits / R.visits : null) + ' ของรถเข้าทั้งหมด'),
-    kpiCard('#06b6d4', IC.clock, 'ซ้ำในวันเดียวกัน', fmt(R.sameDayRep), 'คัน', 'เข้า ≥ 2 ครั้งในวันเดียว (ห่าง > ' + SET.dedupMin + ' นาที)'),
-    day ? '' : kpiCard('#10b981', IC.heart, 'มาต่างวัน', fmt(R.multiDay), 'คัน', pctS(R.multiDayRate) + ' ของรถทั้งหมด')
+    kpiCard('#8b5cf6', IC.rep, repLabel(R), fmt(R.repeat), 'คัน', pctS(R.repeatRate) + ' ของ ' + fmt(R.unique) + ' คัน'),
+    kpiCard('#ec4899', IC.car, 'ครั้งที่มาจาก' + repLabel(R, true), fmt(R.repeatVisits), 'ครั้ง', pctS(R.visits ? R.repeatVisits / R.visits : null) + ' ของรถเข้าทั้งหมด'),
+    sd ? '' : kpiCard('#10b981', IC.heart, 'มาเฉลี่ยต่อคัน', fmt1(R.repeatAvgDays), 'วัน', 'เฉพาะรถที่กลับมาซ้ำ'),
+    kpiCard('#06b6d4', IC.clock, sd ? 'เข้า ≥ 3 ครั้งในวันนี้' : 'ข้อมูลประกอบ: เข้า-ออกหลายรอบในวันเดียว', fmt(sd ? R.freqVisits.slice(2).reduce((t, x) => t + x.count, 0) : R.sameDayRep), 'คัน', sd ? 'ห่างกันเกิน ' + SET.dedupMin + ' นาที' : 'ไม่นับเป็น "กลับมาซ้ำ" (เช่น รถส่งของ/รับส่ง)')
   ].join('');
   const rows = repRows(R); const per = ST.rep.per; const pages = Math.max(1, Math.ceil(rows.length / per));
   if (ST.rep.page >= pages) ST.rep.page = pages - 1;
@@ -1826,8 +2289,11 @@ function doSearch() {
   const exact = L.plates.find((p) => p.plate === q);
   const cards = L.plates.slice(0, 24).map((p) => `<button class="kpi" style="--c:${p.days >= 2 ? '#7c3aed' : '#94a3b8'};text-align:left;cursor:pointer" data-plate="${esc(p.plate)}"><div class="lb"><span class="plate ${p.valid ? '' : 'bad'}">${esc(p.plate)}</span>${p.enters >= 2 ? '<span class="tag">เข้าซ้ำ</span>' : ''}${staffSet().has(p.plate) ? '<span class="tag mute">ไม่นับ</span>' : ''}</div><div class="v num" style="font-size:22px">${fmt(p.enters)}<small>ครั้ง · ${fmt(p.days)} วัน</small></div><div class="s">${esc(p.prov)} · ${esc(p.grp)} · ออก ${fmt(p.exits)} ครั้ง</div></button>`).join('');
   const evs = L.events.filter((e) => !exact || e.plate === exact.plate || L.plates.length === 1);
+  const one = exact || (L.plates.length === 1 ? L.plates[0] : null);
+  let prof = null; try { prof = one ? LPR.plateProfile(ST.db, one.plate, a, b) : null; } catch (e) { console.error(e); }
   out.innerHTML = `<div class="hint" style="margin-bottom:8px">พบ ${fmt(L.matchedPlates)} ทะเบียน · ${fmt(L.total)} รายการ (ทุกกลุ่ม รวมพนักงาน) ในช่วง ${esc(dShort(a))} – ${esc(dShort(b))}${L.plates.length > 24 ? ' · แสดง 24 ทะเบียนแรก' : ''}</div>
     <div class="grid g-kpi">${cards}</div>
+    ${prof ? profileHtml(prof) : ''}
     <div class="card" style="margin-top:14px"><h3>ประวัติการผ่านกล้อง ${exact ? '<span class="plate">' + esc(exact.plate) + '</span>' : ''}${exact ? ` <button class="btn sm" data-staff-toggle="${esc(exact.plate)}">${staffSet().has(exact.plate) ? '✅ กลับมานับเป็นลูกค้า' : '🚫 ไม่นับเป็นลูกค้า'}</button>` : ''} <span class="sub">ล่าสุดก่อน · แสดงสูงสุด 400 รายการ</span></h3>
     <div class="tbl-wrap"><table class="tbl"><thead><tr><th>วันที่</th><th>เวลา</th><th>ทิศทาง</th><th>ทะเบียน</th><th>ประตู</th><th>จังหวัด</th><th>กลุ่ม</th><th class="r">เวลาจอด</th><th>สถานะ</th></tr></thead><tbody>
     ${evs.map((e) => `<tr><td class="num">${dNum(e.day)}</td><td class="num">${tSec(e.sec)}</td><td>${e.dir === 'enter' ? '<span class="tag em">เข้า</span>' : '<span class="tag cy">ออก</span>'}</td><td><span class="plate">${esc(e.plate)}</span></td><td>${esc(e.gate)}</td><td>${esc(e.prov)}</td><td>${esc(e.grp)}</td><td class="r">${e.dwell >= 0 ? durTxt(e.dwell) : '-'}</td><td>${e.kept ? '' : '<span class="tag am">อ่านซ้ำ (ไม่นับ)</span>'}</td></tr>`).join('')}
@@ -1978,7 +2444,7 @@ function recommendations(R, P, Rc) {
     const ph = R.hourly.indexOf(Math.max(...R.hourly)); const g = R.gates.slice().sort((x, y) => y.count - x.count)[0];
     if (g) out.push({ pri: 'ต่ำ', topic: 'การจัดกำลังเจ้าหน้าที่', text: `พิจารณาจัดเจ้าหน้าที่อำนวยความสะดวกที่ประตู ${g.name} ในช่วง ${pad(ph)}:00–${pad(ph + 1)}:00 น. ซึ่งมีรถเข้าหนาแน่นที่สุด`, ref: `${g.name} ${pctS(g.count / R.visits)} ของรถเข้า` });
   }
-  if (eq) { const d = chgPlain(Rc.repeatRate, P.repeatRate, 'pp'); if (d != null && Math.abs(d) >= 2) out.push({ pri: 'กลาง', topic: 'อัตราเข้าซ้ำเปลี่ยนแปลง', text: `อัตราเข้าซ้ำ${d > 0 ? 'เพิ่มขึ้น' : 'ลดลง'} ${fmt1(Math.abs(d))} จุดจากงวดก่อน ควรตรวจสอบกิจกรรม/โปรโมชัน หรือการเปลี่ยนแปลงกลุ่มสมาชิกในช่วงดังกล่าว`, ref: `${pctS(P.repeatRate)} → ${pctS(Rc.repeatRate)}` }); }
+  if (eq) { const d = chgPlain(Rc.repeatRate, P.repeatRate, 'pp'); if (d != null && Math.abs(d) >= 2) out.push({ pri: 'กลาง', topic: 'อัตราเข้าซ้ำเปลี่ยนแปลง', text: `อัตราเข้าซ้ำ${d > 0 ? 'เพิ่มขึ้น' : 'ลดลง'} ${fmt1(Math.abs(d))} จุดจากช่วงที่เทียบ ควรตรวจสอบกิจกรรม/โปรโมชัน หรือการเปลี่ยนแปลงกลุ่มสมาชิกในช่วงดังกล่าว`, ref: `${pctS(P.repeatRate)} → ${pctS(Rc.repeatRate)}` }); }
   if (R.returning.lookbackDataDays < R.returning.lookbackDays) out.push({ pri: 'ต่ำ', topic: 'ข้อมูลย้อนหลัง', text: `นำเข้าข้อมูลย้อนหลังให้ครบ ${R.returning.lookbackDays} วันก่อนช่วงรายงาน เพื่อให้ตัวชี้วัด "ลูกค้าเก่า" สมบูรณ์`, ref: `มี ${R.returning.lookbackDataDays}/${R.returning.lookbackDays} วัน` });
   if (!out.length) out.push({ pri: 'ต่ำ', topic: 'ภาพรวม', text: 'ไม่พบประเด็นที่ต้องดำเนินการเร่งด่วน ติดตามตัวชี้วัดตามรอบปกติ', ref: '-' });
   const order = { 'สูง': 0, 'กลาง': 1, 'ต่ำ': 2 }; return out.sort((x, y) => order[x.pri] - order[y.pri]).slice(0, 7);
@@ -1988,7 +2454,9 @@ function execSummary(R, P, Rc, ptxt) {
   if (!R.visits) return `ในช่วง${esc(ptxt)} ไม่มีรถยนต์เข้าที่นับเป็นลูกค้า (มีข้อมูล ${R.nDataDays}/${R.calDays} วัน)`;
   const eq = P && P.nDataDays > 0 && P.nDataDays === Rc.nDataDays, hasP = P && P.nDataDays > 0, day = ST.period.type === 'day';
   let t = `ในช่วง${esc(ptxt)} ระบบอ่านป้ายทะเบียนอัตโนมัติ (LPR) บันทึกรถยนต์เข้าศูนย์การค้าจำนวน <b>${fmt(R.visits)}</b> ครั้ง จากรถ <b>${fmt(R.unique)}</b> คัน` + (day ? '' : ` เฉลี่ยวันละ ${fmt(R.avgVisitsPerDay)} ครั้ง`) + ` (ตัดการอ่านซ้ำของกล้องและรถกลุ่มพนักงานแล้ว) `;
-  t += `ในจำนวนนี้มีรถที่เข้าใช้บริการซ้ำ <b>${fmt(R.repeat)}</b> คัน คิดเป็นร้อยละ <b>${fmt1((R.repeatRate || 0) * 100)}</b> ของรถทั้งหมด` + (day ? '' : ` โดยเป็นรถที่มาต่างวัน ${fmt(R.multiDay)} คัน`);
+  t += R.repeatMode === 'sameDay'
+    ? `ในจำนวนนี้มีรถที่เข้าใช้บริการซ้ำภายในวันเดียวกัน <b>${fmt(R.repeat)}</b> คัน คิดเป็นร้อยละ <b>${fmt1((R.repeatRate || 0) * 100)}</b> ของรถทั้งหมด`
+    : `ในจำนวนนี้มีรถที่กลับมาใช้บริการซ้ำต่างวัน <b>${fmt(R.repeat)}</b> คัน คิดเป็นร้อยละ <b>${fmt1((R.repeatRate || 0) * 100)}</b> ของรถทั้งหมด มาเฉลี่ย ${fmt1(R.repeatAvgDays)} วันต่อคัน`;
   if (eq) { const d = chgPlain(Rc.repeatRate, P.repeatRate, 'pp'); t += ` ซึ่ง${d > 0 ? 'เพิ่มขึ้น' : d < 0 ? 'ลดลง' : 'ทรงตัว'}${d ? ' ' + fmt1(Math.abs(d)) + ' จุด' : ''}เมื่อเทียบกับงวดก่อน`; }
   if (hasP) { const d = chgPlain(Rc.avgVisitsPerDay, P.avgVisitsPerDay); if (d != null) t += ` ขณะที่รถเข้าเฉลี่ยต่อวัน${d > 0 ? 'เพิ่มขึ้น' : d < 0 ? 'ลดลง' : 'เท่าเดิม'}${d ? 'ร้อยละ ' + fmt1(Math.abs(d)) : ''}`; }
   const ph = R.hourly.indexOf(Math.max(...R.hourly)); const g = R.gates.slice().sort((x, y) => y.count - x.count)[0];
@@ -2023,7 +2491,7 @@ function buildReport(withAppendix) {
     ['รถเข้า (ครั้ง, หลังตัดอ่านซ้ำ)', fmt(Rc.visits), hasP ? fmt(P.visits) : '-', eq ? chgPlain(Rc.visits, P.visits) : null, false],
     ['รถเข้าเฉลี่ยต่อวัน (ครั้ง)', fmt(Rc.avgVisitsPerDay), hasP ? fmt(P.avgVisitsPerDay) : '-', hasP ? chgPlain(Rc.avgVisitsPerDay, P.avgVisitsPerDay) : null, false],
     ['รถทั้งหมด (คัน)', fmt(Rc.unique), hasP ? fmt(P.unique) : '-', eq ? chgPlain(Rc.unique, P.unique) : null, false],
-    ['รถเข้าซ้ำ (คัน)', fmt(Rc.repeat), hasP ? fmt(P.repeat) : '-', eq ? chgPlain(Rc.repeat, P.repeat) : null, false],
+    [repLabel(R, true) + ' (คัน)', fmt(Rc.repeat), hasP ? fmt(P.repeat) : '-', eq ? chgPlain(Rc.repeat, P.repeat) : null, false],
     ['อัตราเข้าซ้ำ', pctS(Rc.repeatRate), hasP ? pctS(P.repeatRate) : '-', eq ? chgPlain(Rc.repeatRate, P.repeatRate, 'pp') : null, true],
     ['ลูกค้าเก่า (คัน)', Rc.returning.lookbackDataDays ? fmt(Rc.returning.before) : '-', hasP && P.returning.lookbackDataDays ? fmt(P.returning.before) : '-', eq && Rc.returning.lookbackDataDays && P.returning.lookbackDataDays ? chgPlain(Rc.returning.before, P.returning.before) : null, false],
     ['เวลาจอดเฉลี่ย', durTxt(Rc.dwellAvg), hasP ? durTxt(P.dwellAvg) : '-', hasP ? chgPlain(Rc.dwellAvg, P.dwellAvg) : null, false],
@@ -2040,7 +2508,7 @@ function buildReport(withAppendix) {
     const T = trendSeries(R);
     mainImg = chartImg({ type: 'bar', data: { labels: T.labels, datasets: [
       { label: 'ลูกค้าเก่า', data: T.ret, backgroundColor: '#8b5cf6', stack: 's', borderRadius: 3 }, { label: 'มาครั้งแรก', data: T.neu, backgroundColor: '#f9a8d4', stack: 's', borderRadius: 3 },
-      { label: 'ซ้ำในวันเดียว (แกนขวา)', data: T.same, type: 'line', borderColor: '#2563eb', backgroundColor: '#2563eb', yAxisID: 'y1', pointRadius: 2, tension: .35, borderWidth: 2 }] },
+      { label: 'รถกลับมาซ้ำที่มาในวันนั้น (แกนขวา)', data: T.rep, type: 'line', borderColor: '#2563eb', backgroundColor: '#2563eb', yAxisID: 'y1', pointRadius: 2, tension: .35, borderWidth: 2 }] },
       options: { scales: { x: { stacked: true, grid: { display: false }, ticks: { maxRotation: 0, autoSkip: T.labels.length > 16 } }, y: { stacked: true, beginAtZero: true }, y1: { position: 'right', beginAtZero: true, grid: { display: false } } } } }, 560, 262);
   } else {
     mainImg = chartImg({ type: 'line', data: { labels: R.hourly.map((_, h) => pad(h)), datasets: [
@@ -2094,7 +2562,7 @@ function buildReport(withAppendix) {
     <div style="display:grid;grid-template-columns:1.25fr 1fr;gap:10px;flex:1;min-height:0">
       <div class="sec">${H(11, 'นิยามและวิธีคำนวณ')}<div class="note">
         • <b>รถเข้า</b> = รายการกล้องขาเข้า หลังตัดการอ่านซ้ำ (ทะเบียนเดียวกันภายใน ${SET.dedupMin} นาที)<br>
-        • <b>รถเข้าซ้ำ</b> = รถที่เข้า ≥ 2 ครั้งในช่วงรายงาน · <b>ลูกค้าเก่า</b> = เคยมาภายใน ${R.returning.lookbackDays} วันก่อนเริ่มช่วง<br>
+        • <b>รถเข้าซ้ำ</b> = รายวัน: เข้า ≥ 2 ครั้งในวันนั้น · รายสัปดาห์/เดือน/ปี: กลับมาต่างวัน (มา ≥ 2 วัน) ไม่นับเข้า-ออกหลายรอบในวันเดียว · <b>ลูกค้าเก่า</b> = เคยมาภายใน ${R.returning.lookbackDays} วันก่อนเริ่มช่วง<br>
         • <b>เวลาจอด</b> = เข้าถึงออกครั้งแรกของทะเบียนเดียวกัน ก่อนการเข้าครั้งถัดไป ไม่เกิน 24 ชม.<br>
         • ระบุรถด้วย${SET.splitProv ? 'ทะเบียน + จังหวัด' : 'ทะเบียน (ไม่แยกจังหวัด เพราะกล้องอ่านจังหวัดคลาดได้)'} · สัปดาห์ = จันทร์–อาทิตย์<br>
         • เปรียบเทียบงวดด้วยจำนวนวันเท่ากัน (รายวันเทียบวันเดียวกันของสัปดาห์ก่อน) · ค่าเฉลี่ยคิดเฉพาะวันที่มีข้อมูล
@@ -2148,7 +2616,7 @@ function buildReport(withAppendix) {
 function openReport() {
   if (!ST.db) { toast('ยังไม่มีข้อมูลสำหรับสร้างรายงาน', 'warn'); return; }
   const [ra, rb] = curRange(); if (!getAnalysis(ra, rb, false).nDataDays) { toast('ช่วงที่เลือกไม่มีข้อมูล — เลือกช่วงอื่นก่อนสร้างรายงาน', 'warn'); return; }
-  APP_BUSY = true; $('rptModal').hidden = false; $('btnRptSave').hidden = true; ST.rptFiles = null;
+  APP_BUSY = true; $('rptModal').hidden = false; $('btnRptSave').hidden = true; ST.rptFiles = null; ST.rptName = null; $('rptAppendix').parentNode.hidden = false;
   const ap = $('rptAppendix').checked;
   let built; try { built = buildReport(ap); } catch (e) { console.error(e); APP_BUSY = false; $('rptModal').hidden = true; toast('สร้างรายงานไม่สำเร็จ: ' + e.message, 'err', 8000); return; }
   const { pages, apCount } = built;
@@ -2158,7 +2626,7 @@ function openReport() {
   $('rptTitle').textContent = 'ตัวอย่างรายงาน A4 · ' + pages.length + ' หน้า' + (ap ? ' (ภาคผนวก ' + fmt(apCount) + ' คัน)' : '');
   
 }
-function closeReport() { $('rptModal').hidden = true; $('rptBody').innerHTML = ''; APP_BUSY = false; }
+function closeReport() { ST.rptName = null; $('rptModal').hidden = true; $('rptBody').innerHTML = ''; APP_BUSY = false; }
 const isIOS = () => /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 async function renderPagesCanvas() {
   await loadLibs(); await document.fonts.ready;
@@ -2178,7 +2646,7 @@ async function exportReport(kind) {
   await withBtn(btn, async () => {
     APP_BUSY = true;
     try {
-      const cs = await renderPagesCanvas(); const base = buildReportName();
+      const cs = await renderPagesCanvas(); const base = ST.rptName || buildReportName();
       let files = [];
       if (kind === 'pdf') {
         const pdf = new window.jspdf.jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4', compress: true });
@@ -2246,7 +2714,7 @@ const Splash = (() => {
 // EVENTS
 // ===================================================================
 function handleEvents() {
-  ['tabs', 'sideNav'].forEach((id) => $(id).addEventListener('click', (e) => { const t = e.target.closest('.tab'); if (t) goTab(t.dataset.tab); }));
+  ['tabs', 'sideNav'].filter((id) => $(id)).forEach((id) => $(id).addEventListener('click', (e) => { const t = e.target.closest('.tab'); if (t) goTab(t.dataset.tab); }));
   $('qsForm').addEventListener('submit', (e) => { e.preventDefault(); const v = $('qsInput').value.trim(); if (!v) return; $('qPlate').value = v; ST.searchScope = 'all'; document.querySelectorAll('#segSearchScope button').forEach((x) => x.classList.toggle('on', x.dataset.scope === 'all')); goTab('search'); doSearch(); });
   // กลับมาออนไลน์ → ซิงค์ข้อมูลที่ค้าง
   window.addEventListener('online', () => { if (SET.gasUrl && SET.gasAuto) syncDrive(false); });
@@ -2309,11 +2777,19 @@ function handleEvents() {
     if (!(await confirmBox(`ตั้ง ${fmt(rows.length)} ทะเบียนที่มาเกือบทุกวันเป็น "ไม่นับเป็นลูกค้า"?`, 'ควรตรวจรายชื่อก่อนว่าเป็นพนักงาน/ผู้เช่าจริง · ยกเลิกรายคันได้ที่ ตั้งค่า → รายชื่อทะเบียนที่ไม่นับ'))) return;
     const n = setStaff(rows.map((r) => r.plate), true); toast('เพิ่ม ' + fmt(n) + ' ทะเบียนในรายชื่อที่ไม่นับแล้ว', 'ok');
   });
+  $('searchOut').addEventListener('click', async (e) => {
+    const pp = e.target.closest('[data-profile-print]'); if (pp) { printProfile(pp.dataset.profilePrint); return; }
+    const wt = e.target.closest('[data-watch-toggle]'); if (wt) { const p = wt.dataset.watchToggle; if ((SET.watch || []).some((w) => w.plate === p)) await watchDel(p); else await watchAdd(p, ''); toast(p + ' — ปรับรายการเฝ้าระวังแล้ว', 'ok'); doSearch(); return; }
+  });
   $('searchOut').addEventListener('click', (e) => { const b = e.target.closest('[data-staff-toggle]'); if (!b) return; e.stopPropagation(); const p = b.dataset.staffToggle, on = !staffSet().has(p); setStaff([p], on); toast(p + (on ? ' — ไม่นับเป็นลูกค้าแล้ว' : ' — กลับมานับเป็นลูกค้าแล้ว'), 'ok'); doSearch(); });
   $('btnStaffSave').addEventListener('click', () => {
     const list = $('sStaff').value.split(/[\s,;]+/).map(LPR.normPlate).filter((p) => p.length >= 2);
     const bad = list.filter((p) => !/[ก-ฮ0-9]/.test(p)); if (bad.length) { toast('รูปแบบทะเบียนไม่ถูกต้อง: ' + bad.slice(0, 3).join(', '), 'err'); return; }
-    SET.staffPlates = [...new Set(list)].sort(); saveSettings(); ST.cache.clear(); renderStaffBox(); render(); notifyTabs('settings'); toast('บันทึกรายชื่อ ' + fmt(SET.staffPlates.length) + ' ทะเบียนแล้ว', 'ok');
+    const prev = new Set(SET.staffPlates || []), next = new Set(list);
+    const adds = [...next].filter((p) => !prev.has(p)), dels = [...prev].filter((p) => !next.has(p));
+    SET.staffPlates = [...next].sort(); saveSettings(); ST.cache.clear(); renderStaffBox(); render(); notifyTabs('settings');
+    sharedChange('staff', 'add', adds).then(() => sharedChange('staff', 'remove', dels));
+    toast('บันทึกรายชื่อ ' + fmt(SET.staffPlates.length) + ' ทะเบียนแล้ว', 'ok');
   });
   $('btnSetExport').addEventListener('click', () => { downloadBlob(new Blob([JSON.stringify({ app: 'LPR Repeat Analytics', v: 1, savedAt: new Date().toISOString(), settings: SET }, null, 2)], { type: 'application/json' }), 'LPR_การตั้งค่า.json'); toast('ส่งออกการตั้งค่าแล้ว (รวมรายชื่อทะเบียนที่ไม่นับ)', 'ok'); });
   $('btnSetImport').addEventListener('click', () => $('inSet').click());
@@ -2327,7 +2803,10 @@ function handleEvents() {
       Object.keys(DEF_SET).forEach((k) => { if (Object.prototype.hasOwnProperty.call(src, k)) next[k] = src[k]; }); // รับเฉพาะคีย์ที่แอปรู้จัก
       if (next.gasUrl && !validGasUrl(next.gasUrl)) next.gasUrl = SET.gasUrl;
       if (typeof next.org !== 'string') next.org = SET.org; next.org = next.org.slice(0, 80);
+      const prevStaff = new Set(SET.staffPlates || []), prevWatch = new Set((SET.watch || []).map((w) => w.plate));
+      next.pendingOps = SET.pendingOps; next.staffMigrated = SET.staffMigrated; // คิวและสถานะการย้ายเป็นของเครื่องนี้ ไม่รับจากไฟล์
       localStorage.setItem('lpr_settings_v1', JSON.stringify(next)); SET = loadSettings(); // loadSettings ตรวจ/ซ่อมค่าทุกช่องอีกชั้น
+      sharedChange('staff', 'add', SET.staffPlates.filter((p) => !prevStaff.has(p))).then(() => sharedChange('watch', 'add', SET.watch.filter((w) => !prevWatch.has(w.plate))));
       applyLook(); renderSettings(); if (ST.files.length) await rebuild('นำเข้าการตั้งค่า'); notifyTabs('settings');
       toast('นำเข้าการตั้งค่าแล้ว · รายชื่อทะเบียนที่ไม่นับ ' + fmt(SET.staffPlates.length) + ' ทะเบียน', 'ok');
     } catch (err) { toast('นำเข้าการตั้งค่าไม่สำเร็จ: ' + (err.name === 'SyntaxError' ? 'ไฟล์ไม่ใช่รูปแบบ JSON ที่ถูกต้อง' : err.message), 'err', 7000); }
@@ -2345,6 +2824,17 @@ function handleEvents() {
   $('btnResetSet').addEventListener('click', async () => { const keep = { gasUrl: SET.gasUrl, gasAuto: SET.gasAuto, syncRange: SET.syncRange, staffPlates: (SET.staffPlates || []).slice() }; SET = Object.assign({}, DEF_SET, keep, { grpOverride: {} }); saveSettings(); applyLook(); renderSettings(); if (ST.files.length) await rebuild('คืนค่าเริ่มต้น'); notifyTabs('settings'); toast('คืนค่าเริ่มต้นแล้ว (รายชื่อทะเบียนที่ไม่นับยังอยู่)', 'ok'); });
   // Report
   $('btnReport').addEventListener('click', openReport);
+  $('btnLine').addEventListener('click', openLine);
+  $('btnLineClose').addEventListener('click', closeLine);
+  $('btnLineCopy').addEventListener('click', async () => { toast((await copyText($('lineText').value)) ? 'คัดลอกข้อความแล้ว — วางในแชท LINE ได้เลย' : 'คัดลอกอัตโนมัติไม่ได้ — กดค้างที่ข้อความแล้วเลือก "คัดลอก"', 'ok'); });
+  $('btnLinePng').addEventListener('click', exportLinePng);
+  $('btnLineShare').addEventListener('click', async () => { const f = ST.lineFile; if (!f) return; const file = new File([f.blob], f.name, { type: 'image/png' }); if (navigator.canShare && navigator.canShare({ files: [file] })) { try { await navigator.share({ files: [file], title: f.name }); return; } catch (e) { if (e.name === 'AbortError') return; } } downloadBlob(f.blob, f.name); });
+  $('segCmp').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; SET.cmpMode = b.dataset.cmp; saveSettings(); render(); });
+  $('watchForm').addEventListener('submit', async (e) => { e.preventDefault(); $('wErr').textContent = ''; try { const p = await watchAdd($('wPlate').value, $('wNote').value); $('wPlate').value = ''; $('wNote').value = ''; toast('เพิ่ม ' + p + ' ในรายการเฝ้าระวังแล้ว', 'ok'); } catch (x) { $('wErr').textContent = x.message; } });
+  $('tblWatch').addEventListener('click', async (e) => {
+    const v = e.target.closest('[data-wview]'); if (v) { $('qPlate').value = v.dataset.wview; ST.searchScope = 'all'; document.querySelectorAll('#segSearchScope button').forEach((x) => x.classList.toggle('on', x.dataset.scope === 'all')); goTab('search'); doSearch(); return; }
+    const d = e.target.closest('[data-wdel]'); if (d && await confirmBox('ลบ ' + d.dataset.wdel + ' ออกจากรายการเฝ้าระวัง?', 'มีผลกับทุกเครื่อง')) { await watchDel(d.dataset.wdel); toast('ลบแล้ว', 'ok'); }
+  });
   $('btnRptClose').addEventListener('click', closeReport);
   $('rptAppendix').addEventListener('change', openReport);
   $('btnRptPdf').addEventListener('click', () => exportReport('pdf'));
@@ -2352,6 +2842,7 @@ function handleEvents() {
   $('btnRptSave').addEventListener('click', saveIOS);
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && !$('rptModal').hidden) closeReport();
+    if (e.key === 'Escape' && !$('lineModal').hidden) closeLine();
     // กด "/" เพื่อค้นหาทะเบียนเร็ว (ยกเว้นกำลังพิมพ์ในช่องอื่น)
     if (e.key === '/' && !/INPUT|TEXTAREA|SELECT/.test((document.activeElement || {}).tagName || '')) { e.preventDefault(); $('qsInput').focus(); }
   });
@@ -2370,8 +2861,9 @@ async function init() {
   $('btnSync').hidden = !(SET.gasUrl || ST.dirHandle);
   if (!ST.files.length) ST.tab = 'import';
   await rebuild('เปิดแอป');
-  if (SET.gasUrl && SET.gasAuto && navigator.onLine !== false) syncDrive(false);
-  else if (ST.dirHandle) syncLinkedFolder(false).catch(() => {});
+  refreshSharedUI();
+  if (SET.gasUrl && SET.gasAuto && navigator.onLine !== false) syncDrive(false); // จบแล้วดึงรายชื่อร่วมต่อ
+  else { if (SET.gasUrl) sharedFetch(true); if (ST.dirHandle) syncLinkedFolder(false).catch(() => {}); }
 }
 init();
 
