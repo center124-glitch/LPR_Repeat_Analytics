@@ -3,7 +3,7 @@
 <head>
 <!--
   LPR Repeat Analytics — ระบบตรวจหาทะเบียนรถยนต์เข้าใช้บริการซ้ำ (ศูนย์การค้าซีคอนบางแค)
-  ไฟล์: LPR_Repeat_Analytics_v12.html  ·  คู่กับ Code_LPR_v3.gs (BACKEND_VERSION = 3)
+  ไฟล์: LPR_Repeat_Analytics_v13.html  ·  คู่กับ Code_LPR_v3.gs (BACKEND_VERSION = 3)
   ─────────────────────────────────────────────────────────────────────────────
   สรุป PROJECT (ย่อ — ฉบับเต็มอยู่ใน PROJECT.md)
   • ข้อมูลต้นทาง: โฟลเดอร์ D:\งานข้อมูล LPR\LPR ปี.xx\xx.เดือน ...\YYYYMMDD_enter.csv / YYYYMMDD_exit.csv
@@ -16,6 +16,9 @@
   • ตัวเลขอ้างอิง (ตรวจด้วย Python แล้ว): 1–11 ต.ค. 69 รถเข้า 92,444 ครั้ง · 68,303 คัน · กลับมาซ้ำ (≥ 2 วัน) 11,877 คัน
   ─────────────────────────────────────────────────────────────────────────────
   ประวัติเวอร์ชัน
+  v13 (14 พ.ย. 2569) — ดึงข้อมูลจาก Google Drive อย่างเดียว (อัตโนมัติ: เปิดแอป/ทุก 15 นาที/กลับมาที่แอป/ออนไลน์) · เอานำเข้าจากเครื่อง/เชื่อมโฟลเดอร์ออก
+       · ข้อมูลในแอปตรงกับ Drive (ไฟล์ที่ลบจาก Drive ลบจากแอปด้วย มีกันพลาด) · หน้า "ข้อมูล Drive" แสดงสถานะซิงค์ · แก้ URL ไม่ถูกบันทึก
+  v12 (14 พ.ย. 2569) — การ์ด KPI สีเข้ม 30% + แอนิเมชัน · พื้นหลังแผงเคลื่อนไหว · ตรวจทานระบบรายชื่อร่วม
   v11 (14 พ.ย. 2569) — โฉมใหม่ "Orbit" ตามวิดีโอตัวอย่าง: กรอบ+หัวแอป+แท็บสีเขียว เนื้อหาบนแผงสีขาวขอบมน การ์ด KPI สีขาวเรียบ
        · แอนิเมชัน: เผยแอปแบบวงกลมจากมุมจอ, โครงร่างจาง ๆ (skeleton) ระหว่างเปลี่ยนแท็บ, การ์ดลอยขึ้นทีละใบ, ตัวเลขวิ่ง
        · โลโก้/ไอคอน รายงาน A4 การ์ด LINE หน้าโลโก้ เปลี่ยนเป็นโทนเขียว · คงแท็บด้านบนและฟังก์ชันทั้งหมดของ v10
@@ -584,6 +587,14 @@ body.fx-full .topbar{animation:frameFlow 16s ease-in-out infinite}
 @keyframes frameFlow{0%,100%{background-position:0% 0}50%{background-position:100% 0}}
 .panel{background:color-mix(in srgb,var(--panel) 100%,transparent)}
 @media(max-width:640px){.pbg i{filter:blur(34px)}.pbg .b4{display:none}}
+
+/* v13: หน้า "ข้อมูล Drive" */
+.sync-hero{display:flex;align-items:center;gap:14px;padding:14px;border-radius:18px;background:color-mix(in srgb,var(--pri) 9%,var(--card));border:1px solid color-mix(in srgb,var(--pri) 25%,var(--line));flex-wrap:wrap}
+.sync-ic{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;font-size:26px;background:var(--card);box-shadow:var(--shadow);flex:0 0 auto}
+.sync-ic.spin-slow{animation:syncPulse 1.2s ease-in-out infinite}
+@keyframes syncPulse{50%{transform:scale(.9);box-shadow:0 0 0 8px color-mix(in srgb,var(--pri) 18%,transparent)}}
+@media(max-width:640px){.sync-hero .btn{flex:1 1 100%}}
+.sync-rules{margin:12px 0 0;padding-left:20px;font-size:13.5px;color:var(--ink-soft);display:flex;flex-direction:column;gap:4px}
 </style>
 </head>
 <body class="locked fx-full">
@@ -635,7 +646,7 @@ body.fx-full .topbar{animation:frameFlow 16s ease-in-out infinite}
     <button class="tab" data-tab="dwell"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/></svg>เวลาจอด</button>
     <button class="tab" data-tab="watch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>เฝ้าระวัง<span class="badge" id="watchBadge" hidden>0</span></button>
     <button class="tab" data-tab="quality"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 3 7v6c0 5 4 8 9 9 5-1 9-4 9-9V7z"/><path d="m9 12 2 2 4-4"/></svg>คุณภาพข้อมูล</button>
-    <button class="tab" data-tab="import"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0-4-4m4 4 4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>นำเข้าข้อมูล</button>
+    <button class="tab" data-tab="import"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 18a5 5 0 1 1 .9-9.9A6 6 0 0 1 19 10a4 4 0 0 1-1 7.9"/><path d="M12 12v8m0 0-3-3m3 3 3-3"/></svg>ข้อมูล Drive</button>
     <button class="tab" data-tab="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>ตั้งค่า</button>
   </nav>
   </div></header>
@@ -745,38 +756,39 @@ body.fx-full .topbar{animation:frameFlow 16s ease-in-out infinite}
 
   <!-- นำเข้าข้อมูล -->
   <section class="page" id="pg-import" hidden>
+    <!-- v13: ดึงข้อมูลจาก Google Drive อย่างเดียว (อัตโนมัติ) — เอาการนำเข้าไฟล์จากเครื่อง/เชื่อมโฟลเดอร์ออก -->
     <div class="grid g-2">
       <div class="card">
-        <h3>💻 นำเข้าจากเครื่องนี้ <span class="sub">อ่านไฟล์ในเบราว์เซอร์ ไม่ส่งข้อมูลออกนอกเครื่อง</span></h3>
-        <div class="drop" id="dropZone">
-          <div style="font-size:38px">📂</div>
-          <div class="ff-head" style="font-weight:600">ลากโฟลเดอร์หรือไฟล์ CSV มาวางที่นี่</div>
-          <div class="hint">รองรับชื่อไฟล์ <code>YYYYMMDD_enter.csv</code> / <code>YYYYMMDD_exit.csv</code> · เลือกทั้งโฟลเดอร์ปี/เดือนได้ ระบบหาไฟล์ในโฟลเดอร์ย่อยให้เอง</div>
-          <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px">
-            <button class="btn pri" id="btnPickFolder">เลือกโฟลเดอร์</button>
-            <button class="btn" id="btnPickFiles">เลือกไฟล์</button>
-            <button class="btn cy" id="btnLinkFolder" hidden>เชื่อมโฟลเดอร์ (ซิงค์ซ้ำได้)</button>
+        <h3>☁️ ซิงค์จาก Google Drive <span class="sub">อัตโนมัติ · ทุกเครื่องเห็นข้อมูลเดียวกัน</span></h3>
+        <div class="sync-hero">
+          <div class="sync-ic" id="syncIc">☁️</div>
+          <div style="min-width:0;flex:1">
+            <div class="ff-head" style="font-weight:700;font-size:17px" id="syncHead">กำลังตรวจสถานะ…</div>
+            <div class="hint" id="syncSub"></div>
           </div>
-          <input type="file" id="inFolder" webkitdirectory directory multiple hidden>
-          <input type="file" id="inFiles" accept=".csv,text/csv" multiple hidden>
+          <button class="btn pri" id="btnGasSync">ซิงค์ตอนนี้</button>
         </div>
-        <div id="linkedInfo" class="hint" style="margin-top:8px"></div>
         <div id="impProg" hidden style="margin-top:12px"><div class="prog"><i id="impBar"></i></div><div class="hint" id="impTxt" style="margin-top:4px"></div></div>
+        <ul class="sync-rules">
+          <li>ดึงอัตโนมัติ: ตอนเปิดแอป · ทุก 15 นาทีขณะเปิดค้าง · กลับมาที่แอปหลังห่างเกิน 10 นาที · อินเทอร์เน็ตกลับมา</li>
+          <li>ดึงเฉพาะไฟล์ใหม่/ไฟล์ที่ถูกแก้ใน Drive · ไฟล์ที่ถูกลบออกจาก Drive จะถูกลบออกจากแอปด้วย (ข้อมูลตรงกับ Drive เสมอ)</li>
+          <li>ออฟไลน์: ใช้ข้อมูลที่ซิงค์ไว้ล่าสุดในเครื่องได้ตามปกติ</li>
+        </ul>
+        <input type="file" id="inFiles" accept=".csv,text/csv" multiple hidden aria-hidden="true">
       </div>
       <div class="card">
-        <h3>☁️ ออนไลน์ผ่าน Google Drive <span class="sub">ทุกเครื่อง/มือถือเห็นข้อมูลเดียวกัน</span></h3>
-        <div class="field"><label for="gasUrl">URL ของ Apps Script (ใส่ไว้ให้แล้ว — ไม่ต้องแก้)</label><input class="inp" id="gasUrl" placeholder="https://script.google.com/macros/s/…/exec"><div class="err-t" id="gasErr"></div></div>
+        <h3>⚙️ การเชื่อมต่อ <span class="sub">ตั้งไว้ให้แล้ว — ปกติไม่ต้องแก้</span></h3>
+        <div class="field" style="margin-top:10px"><label for="gasRange">ช่วงข้อมูลที่ดึงจาก Drive</label><select class="inp" id="gasRange"><option value="m3">3 เดือนล่าสุด (เร็วสุด)</option><option value="y0">ตั้งแต่ต้นปีนี้ (แนะนำ)</option><option value="m12">12 เดือนล่าสุด</option><option value="y1">ปีนี้ + ปีที่แล้ว (สำหรับ "เทียบปีก่อน")</option></select><div class="hint">ใน Drive มีข้อมูลปี 64–69 รวมหลายพันไฟล์ ดึงเฉพาะช่วงที่ใช้ — ครั้งแรกใช้เวลาราว 1–2 วินาที/ไฟล์ ครั้งต่อไปดึงเฉพาะไฟล์ใหม่</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
           <button class="btn" id="btnGasTest">ทดสอบการเชื่อมต่อ</button>
-          <button class="btn cy" id="btnGasSync">ซิงค์ข้อมูลตอนนี้</button>
         </div>
-        <div class="field" style="margin-top:10px"><label for="gasRange">ช่วงข้อมูลที่ดึงจาก Drive</label><select class="inp" id="gasRange"><option value="m3">3 เดือนล่าสุด (เร็วสุด)</option><option value="y0">ตั้งแต่ต้นปีนี้ (แนะนำ)</option><option value="m12">12 เดือนล่าสุด</option><option value="y1">ปีนี้ + ปีที่แล้ว (สำหรับ "เทียบปีก่อน")</option></select><div class="hint">ใน Drive มีข้อมูลปี 64–69 รวมหลายพันไฟล์ ดึงเฉพาะช่วงที่ใช้ — ครั้งแรกใช้เวลาราว 1–2 วินาที/ไฟล์ ครั้งต่อไปดึงเฉพาะไฟล์ใหม่</div></div>
-        <label class="switch"><span>ซิงค์อัตโนมัติทุกครั้งที่เปิดแอป</span><input type="checkbox" id="gasAuto"></label>
-        <details style="margin-top:6px"><summary class="ff-head" style="cursor:pointer;font-weight:600;font-size:14px">วิธีตั้งค่า (ทำครั้งเดียว ~5 นาที)</summary>
+        
+        <details style="margin-top:10px"><summary class="ff-head" style="cursor:pointer;font-weight:600;font-size:14px">ขั้นสูง: URL ของ Apps Script และวิธีตั้งค่า</summary>
+          <div style="margin-top:10px"><div class="field"><label for="gasUrl">URL ของ Apps Script (ใส่ไว้ให้แล้ว — ไม่ต้องแก้)</label><input class="inp" id="gasUrl" placeholder="https://script.google.com/macros/s/…/exec"><div class="err-t" id="gasErr"></div></div>
           <ol class="steps" style="margin-top:10px">
             <li><span>✅ ซิงค์โฟลเดอร์ <code>D:\งานข้อมูล LPR</code> ขึ้น Google Drive แล้ว</span></li>
             <li><span>ล็อกอินบัญชี Google ที่เป็นเจ้าของโฟลเดอร์ แล้วเปิด <b>script.google.com</b> → <b>โครงการใหม่</b></span></li>
-            <li><span>ลบโค้ดเดิมในหน้า <code>Code.gs</code> ทั้งหมด → วางโค้ดจากไฟล์ <code>Code_LPR_v2.gs</code> → กด 💾 บันทึก (รหัสโฟลเดอร์ใส่ไว้ในโค้ดแล้ว)</span></li>
+            <li><span>ลบโค้ดเดิมในหน้า <code>Code.gs</code> ทั้งหมด → วางโค้ดจากไฟล์ <code>Code_LPR_v3.gs</code> → กด 💾 บันทึก (รหัสโฟลเดอร์ใส่ไว้ในโค้ดแล้ว)</span></li>
             <li><span>เลือกฟังก์ชัน <code>testSetup</code> → กด <b>เรียกใช้ (Run)</b> → อนุญาตสิทธิ์ (ขั้นสูง → ไปที่โครงการ) → ดูบันทึกว่าพบไฟล์</span></li>
             <li><span><b>การทำให้ใช้งานได้ (Deploy)</b> → การทำให้ใช้งานได้รายการใหม่ → ⚙️ เลือก <b>เว็บแอป</b> · เรียกใช้ในฐานะ: <b>ฉัน</b> · ผู้ที่มีสิทธิ์เข้าถึง: <b>ทุกคน</b> → Deploy → คัดลอก URL ที่ลงท้าย <code>/exec</code> มาวางด้านบน</span></li>
             <li><span>กด "ทดสอบการเชื่อมต่อ" → "ซิงค์ข้อมูลตอนนี้"</span></li>
@@ -788,7 +800,7 @@ body.fx-full .topbar{animation:frameFlow 16s ease-in-out infinite}
       <h3>🗂️ ข้อมูลที่อยู่ในแอป <span class="sub" id="storeSub"></span></h3>
       <div class="tbl-wrap"><table class="tbl" id="tblStore"></table></div>
       <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px;flex-wrap:wrap"><button class="btn danger sm" id="btnClearAll">ลบข้อมูลทั้งหมดในแอป</button></div>
-      <div class="hint" style="margin-top:6px">ลบในแอปเท่านั้น — ไฟล์ต้นฉบับในโฟลเดอร์/Drive ไม่ถูกแตะต้อง</div>
+      <div class="hint" style="margin-top:6px">ลบในแอปเท่านั้น — ไฟล์ใน Google Drive ไม่ถูกแตะต้อง (ซิงค์ครั้งถัดไปจะดึงกลับมา)</div>
     </div>
   </section>
 
@@ -1387,7 +1399,7 @@ if (typeof module !== 'undefined') module.exports = LPR;
 /* ===================================================================
  * APP — UI / นำเข้าข้อมูล / รายงาน / หน้าโลโก้
  * =================================================================== */
-const APP_VERSION = 12;
+const APP_VERSION = 13;
 const BACKEND_VERSION = 3;          // ต้องตรงกับ VERSION ใน Code_LPR_v2.gs
 let APP_BUSY = false;
 // URL ของ Apps Script (Code_LPR_v2.gs ที่ Deploy แล้ว) — ฝังไว้ให้ทุกเครื่องเปิดแล้วซิงค์ได้ทันที ไม่ต้องวาง URL เอง
@@ -1695,11 +1707,16 @@ function syncFromDay() {
   if (r === 'y1') return LPR.dayNum(o.y - 1, 1, 1);
   return LPR.dayNum(o.y - 1, 12, 1); // y0: ต้นปี + ย้อน 1 เดือน ให้คำนวณ "ลูกค้าเก่า" เดือน ม.ค. ได้
 }
-function syncDrive(manual) { return exclusive('ซิงค์ Google Drive', () => syncDriveRun(manual)); }
+function syncDrive(manual) {
+  // สถานะ/หน้าว่างอัปเดตหลังปล่อยคิวงานแล้ว (ระหว่างทำงาน OP_NAME ยังเป็นชื่องานนี้)
+  return exclusive('ซิงค์ Google Drive', () => { renderSyncStatus(); if (!ST.db) render(); return syncDriveRun(manual); }).finally(() => { renderSyncStatus(); if (!ST.db) render(); });
+}
+window.syncDrive = syncDrive;
 async function syncDriveRun(manual) {
   if (navigator.onLine === false) { if (manual) toast('ไม่มีอินเทอร์เน็ต — ใช้ข้อมูลที่มีในเครื่อง แอปจะซิงค์เองเมื่อออนไลน์', 'warn'); return; }
-  if (!SET.gasUrl) { if (manual) toast('ใส่ URL ของ Apps Script ที่หน้า "นำเข้าข้อมูล" ก่อน', 'warn'); return; }
-  APP_BUSY = true; $('impProg').hidden = false;
+  if (!SET.gasUrl) { if (manual) toast('ใส่ URL ของ Apps Script ที่หน้า "ข้อมูล Drive" ก่อน', 'warn'); return; }
+  // ซิงค์เบื้องหลัง (อัตโนมัติ) ไม่กันการพักหน้าจอ — กันเฉพาะตอนผู้ใช้กดซิงค์เอง
+  const prevBusy = APP_BUSY; if (manual) APP_BUSY = true; $('impProg').hidden = false; ST.syncTry = Date.now();
   try {
     $('impTxt').textContent = 'กำลังขอรายชื่อไฟล์จาก Google Drive…'; $('impBar').style.width = '3%';
     const fromDay = syncFromDay(), from = LPR.iso(fromDay).replace(/-/g, '');
@@ -1713,7 +1730,8 @@ async function syncDriveRun(manual) {
     if (dupNames && manual) toast('ใน Drive มีไฟล์ชื่อซ้ำ ' + dupNames + ' ไฟล์ — ใช้ฉบับที่แก้ไขล่าสุด', 'warn', 6000);
     const todo = [...byKey.values()].filter((f) => { const m = LPR.parseFileName(f.name); if (!m || m.day < fromDay) return false; const o = have.get(m.key);
       if (!o) return true;
-      if (o.src === 'local' && o.size === f.size) return false; // ไฟล์เดียวกันที่นำเข้าจากเครื่องแล้ว ไม่ต้องดึงซ้ำ
+      // v13 (Drive อย่างเดียว): ไฟล์ที่เคยนำเข้าจากเครื่อง ขนาดเท่ากับใน Drive = ไฟล์เดียวกัน → เปลี่ยนเป็นของ Drive โดยไม่ดาวน์โหลดซ้ำ · ขนาดต่าง → ดึงฉบับ Drive มาแทน
+      if (o.src === 'local') { if (o.size === f.size) { o.src = 'drive'; o.remoteId = f.id; o.updated = f.updated; relink.push(o); return false; } return true; }
       // ย้ายโฟลเดอร์ใน Drive: รหัสไฟล์เปลี่ยน แต่ขนาดและเวลาแก้ไขเท่าเดิม = ไฟล์เดียวกัน → จำรหัสใหม่ ไม่ต้องดาวน์โหลดซ้ำ
       if (o.remoteId !== f.id && o.size === f.size && o.updated === f.updated) { o.remoteId = f.id; relink.push(o); return false; }
       return o.remoteId !== f.id || o.updated !== f.updated; });
@@ -1758,17 +1776,53 @@ async function syncDriveRun(manual) {
     };
     const total = todo.length, t0 = Date.now();
     if (total) await Promise.all([worker(), worker(), worker()]);
+    // v13: ให้ข้อมูลในแอปตรงกับ Drive — ไฟล์ในช่วงที่ซิงค์ที่ไม่มีใน Drive แล้ว (ถูกลบ/เคยนำเข้าจากเครื่อง) ลบออกจากแอป
+    // กันพลาด: Drive ตอบรายชื่อว่าง หรือจะลบเกิน 30% ของไฟล์ในช่วง → ไม่ลบ แจ้งเตือนแทน (อาจเป็นสิทธิ์/โฟลเดอร์ผิดชั่วคราว)
+    let removed = 0;
+    {
+      const inRange = [...have.values()].filter((f) => f.fileDay >= fromDay);
+      const gone = inRange.filter((f) => !byKey.has(f.key));
+      if (gone.length && byKey.size && gone.length <= Math.max(4, Math.floor(inRange.length * 0.3))) {
+        for (const f of gone) { try { await IDB.del('files', f.key); have.delete(f.key); removed++; } catch (e) { break; } }
+      } else if (gone.length) toast(`ไม่พบ ${gone.length} ไฟล์ใน Drive (จากที่มีในแอป ${inRange.length}) — ยังไม่ลบออกจากแอปเพื่อความปลอดภัย ตรวจโฟลเดอร์ใน Drive`, 'warn', 9000);
+    }
     ST.files = [...have.values()];
     $('impTxt').textContent = `ซิงค์เสร็จ: ไฟล์ใน Drive ตั้งแต่ ${dShort(fromDay)} = ${ls.files.length} ไฟล์ · ใหม่/อัปเดต ${added}` + (errs.length ? ` · ผิดพลาด ${errs.length}` : '');
     try { localStorage.setItem('lpr_lastsync', String(Date.now())); } catch (e) {}
     if (errs.length) toast('ดึงไม่ได้ ' + errs.length + ' ไฟล์: ' + errs[0], 'err', 7000);
-    if (added) { toast(`ซิงค์สำเร็จ เพิ่ม ${added} ไฟล์`, 'ok'); await rebuild('ซิงค์ ' + added + ' ไฟล์'); notifyTabs('data'); }
-    else { updateChip(); if (manual) toast('ข้อมูลเป็นปัจจุบันแล้ว', 'ok'); }
+    if (removed) toast(`ลบ ${removed} ไฟล์ที่ไม่มีใน Drive แล้วออกจากแอป`, 'info', 6000);
+    if (added || removed) { if (added) toast(`ซิงค์สำเร็จ เพิ่ม/อัปเดต ${added} ไฟล์`, 'ok'); await rebuild('ซิงค์ ' + (added + removed) + ' ไฟล์'); notifyTabs('data'); }
+    else { if (relink.length) notifyTabs('data'); updateChip(); if (manual) toast('ข้อมูลเป็นปัจจุบันแล้ว', 'ok'); }
     renderStore();
     await sharedFetch(!manual);
   } catch (e) {
-    $('impTxt').textContent = 'ซิงค์ไม่สำเร็จ: ' + e.message; if (manual) toast(e.message, 'err', 7000); else toast('ซิงค์อัตโนมัติไม่สำเร็จ — ใช้ข้อมูลที่มีในเครื่อง', 'warn');
-  } finally { APP_BUSY = false; }
+    $('impTxt').textContent = 'ซิงค์ไม่สำเร็จ: ' + e.message; ST.syncFail = (ST.syncFail || 0) + 1;
+    if (manual) toast(e.message, 'err', 7000);
+    else if (ST.syncFail === 1) toast('ซิงค์อัตโนมัติไม่สำเร็จ — ใช้ข้อมูลที่มีในเครื่อง (แอปจะลองใหม่ทุก 5 นาที)', 'warn'); // แจ้งครั้งเดียว ไม่เด้งซ้ำทุกรอบ
+    return;
+  } finally { if (manual) APP_BUSY = prevBusy; }
+  ST.syncFail = 0;
+}
+// สถานะซิงค์ (หน้า "ข้อมูล Drive" + ชิปบนหัวแอป)
+const SYNC_EVERY = 15 * 60000, SYNC_STALE = 10 * 60000;
+function lastSyncAt() { try { return +localStorage.getItem('lpr_lastsync') || 0; } catch (e) { return 0; } }
+function renderSyncStatus() {
+  if (!$('syncHead')) return;
+  const t = lastSyncAt(), busyNow = OP_NAME === 'ซิงค์ Google Drive', off = navigator.onLine === false;
+  const ago = t ? Math.max(0, Math.round((Date.now() - t) / 60000)) : null;
+  $('syncIc').textContent = busyNow ? '🔄' : off ? '📴' : !t ? '☁️' : ago > 60 ? '⚠️' : '✅';
+  $('syncIc').classList.toggle('spin-slow', busyNow);
+  $('btnGasSync').disabled = busyNow; $('btnGasSync').textContent = busyNow ? 'กำลังซิงค์…' : 'ซิงค์ตอนนี้';
+  $('syncHead').textContent = busyNow ? 'กำลังซิงค์จาก Google Drive…' : off ? 'ออฟไลน์ — ใช้ข้อมูลที่ซิงค์ไว้ล่าสุด' : !t ? 'ยังไม่เคยซิงค์' : 'ซิงค์ล่าสุด ' + (ago < 1 ? 'เมื่อสักครู่' : ago < 60 ? ago + ' นาทีที่แล้ว' : absTxtMs(t) + ' น.');
+  $('syncSub').innerHTML = (ST.db ? `ข้อมูล ${esc(dShort(ST.db.minDay))} – ${esc(dShort(ST.db.maxDay))} · ${fmt(ST.db.days.length)} วัน · ${fmt(ST.files.length)} ไฟล์` : 'ยังไม่มีข้อมูลในแอป') +
+    `<br>ช่วงที่ดึง: ${esc(SYNC_RANGES[SET.syncRange] || '')}` + (t && !off ? ` · รอบถัดไปประมาณ ${Math.max(1, Math.round((t + SYNC_EVERY - Date.now()) / 60000))} นาที` : '');
+}
+// ซิงค์อัตโนมัติเมื่อถึงเวลา (เรียกจากตัวจับเวลา/กลับมาที่แอป/ออนไลน์) — ข้ามถ้ามีงานอื่นค้าง หรือกำลังดูรายงาน
+function autoSync(minGap) {
+  if (!SET.gasUrl || document.hidden || APP_BUSY || OP_NAME || navigator.onLine === false || document.body.classList.contains('locked') && ST.files.length) { renderSyncStatus(); return; }
+  if (Date.now() - lastSyncAt() < minGap) { renderSyncStatus(); return; }
+  if (ST.syncFail && Date.now() - ST.syncTry < 5 * 60000) { renderSyncStatus(); return; } // เพิ่งลองแล้วไม่สำเร็จ → เว้น 5 นาที
+  syncDrive(false);
 }
 
 // ---------- ช่วงเวลา ----------
@@ -1840,7 +1894,7 @@ function shiftPeriodUndo(p, dir) {
   else if (p.type === 'month') { const o = LPR.ymd(p.anchor); let y = o.y, m = o.m - dir; if (m < 1) { m = 12; y--; } if (m > 12) { m = 1; y++; } p.anchor = LPR.dayNum(y, m, 1); }
   else if (p.type === 'year') { const o = LPR.ymd(p.anchor); p.anchor = LPR.dayNum(o.y - dir, 1, 1); }
 }
-const PAGE_T = { watch: ['เฝ้าระวัง', 'ทะเบียนที่ต้องจับตา — แจ้งเตือนเมื่อพบในข้อมูลล่าสุด'], overview: ['ภาพรวม', 'สรุปรถเข้า–รถเข้าซ้ำ ตามช่วงเวลาที่เลือก'], search: ['ค้นหาทะเบียน', 'ประวัติการผ่านกล้อง LPR ของทะเบียนที่ค้นหา'], repeat: ['รถเข้าซ้ำ', 'อันดับรถที่เข้าใช้บริการซ้ำ ส่งออก CSV ได้'], dwell: ['เวลาจอด', 'ระยะเวลาตั้งแต่เข้าจนออก'], quality: ['คุณภาพข้อมูล', 'ความครบถ้วนของไฟล์และจุดที่ต้องตรวจสอบ'], import: ['นำเข้าข้อมูล', 'จากโฟลเดอร์ในเครื่อง หรือ Google Drive'], settings: ['ตั้งค่า', 'นิยามการนับและการแสดงผล'] };
+const PAGE_T = { watch: ['เฝ้าระวัง', 'ทะเบียนที่ต้องจับตา — แจ้งเตือนเมื่อพบในข้อมูลล่าสุด'], overview: ['ภาพรวม', 'สรุปรถเข้า–รถเข้าซ้ำ ตามช่วงเวลาที่เลือก'], search: ['ค้นหาทะเบียน', 'ประวัติการผ่านกล้อง LPR ของทะเบียนที่ค้นหา'], repeat: ['รถเข้าซ้ำ', 'อันดับรถที่เข้าใช้บริการซ้ำ ส่งออก CSV ได้'], dwell: ['เวลาจอด', 'ระยะเวลาตั้งแต่เข้าจนออก'], quality: ['คุณภาพข้อมูล', 'ความครบถ้วนของไฟล์และจุดที่ต้องตรวจสอบ'], import: ['ข้อมูล Drive', 'ซิงค์จาก Google Drive อัตโนมัติ'], settings: ['ตั้งค่า', 'นิยามการนับและการแสดงผล'] };
 
 // ---------- RENDER ----------
 // ห่อ render: ถ้าส่วนใดผิดพลาด แสดงแถบแจ้งพร้อมวิธีแก้ แทนหน้าจอค้างครึ่ง ๆ กลาง ๆ
@@ -1881,7 +1935,8 @@ function renderEmpty() {
   const sec = $('pg-' + ST.tab); if (!sec || ST.tab === 'search') return;
   const box = sec.querySelector('.empty') || document.createElement('div');
   box.className = 'empty card';
-  box.innerHTML = `<div class="big">📭</div><h3 style="justify-content:center">ยังไม่มีข้อมูล LPR ในแอป</h3><p>นำเข้าไฟล์ <code>YYYYMMDD_enter.csv</code> / <code>_exit.csv</code> จากโฟลเดอร์ หรือซิงค์จาก Google Drive</p><button class="btn pri" onclick="goTab('import')">ไปหน้านำเข้าข้อมูล</button>`;
+  const syncing = OP_NAME === 'ซิงค์ Google Drive';
+  box.innerHTML = `<div class="big">${syncing ? '🔄' : '☁️'}</div><h3 style="justify-content:center">${syncing ? 'กำลังดึงข้อมูล LPR จาก Google Drive…' : 'ยังไม่มีข้อมูล LPR ในแอป'}</h3><p>${syncing ? 'ครั้งแรกอาจใช้เวลา 1–3 นาที ขึ้นกับช่วงข้อมูล — ดูความคืบหน้าที่หน้า "ข้อมูล Drive"' : navigator.onLine === false ? 'ออฟไลน์อยู่ — แอปจะดึงข้อมูลจาก Google Drive เองเมื่อเชื่อมต่ออินเทอร์เน็ต' : 'แอปดึงข้อมูลจาก Google Drive อัตโนมัติ — กดปุ่มด้านล่างเพื่อดึงตอนนี้'}</p><div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="btn pri" onclick="syncDrive(true)">☁️ ซิงค์จาก Drive ตอนนี้</button><button class="btn" onclick="goTab('import')">ดูสถานะการซิงค์</button></div>`;
   [...sec.children].forEach((c) => { if (c !== box) c.hidden = true; });
   if (!box.parentNode) sec.prepend(box);
 }
@@ -2533,7 +2588,7 @@ function exportRepCsv() {
 // ----- ค้นหาทะเบียน -----
 function doSearch() {
   const q = LPR.normPlate($('qPlate').value); $('qErr').textContent = '';
-  if (!ST.db) { $('qErr').textContent = 'ยังไม่มีข้อมูล — นำเข้าไฟล์ก่อน'; return; }
+  if (!ST.db) { $('qErr').textContent = 'ยังไม่มีข้อมูล — รอซิงค์จาก Google Drive'; return; }
   if (q.length < 2) { $('qErr').textContent = 'พิมพ์อย่างน้อย 2 ตัวอักษร'; return; }
   let a = ST.db.minDay, b = ST.db.maxDay; if (ST.searchScope === 'period') [a, b] = curRange();
   const L = LPR.lookup(ST.db, q, a, b, 400);
@@ -2603,9 +2658,7 @@ function renderStore() {
   $('tblStore').innerHTML = '<thead><tr><th>เดือน</th><th class="r">วันที่มีข้อมูล</th><th class="r">ไฟล์เข้า</th><th class="r">ไฟล์ออก</th><th class="r">รายการ</th><th>แหล่ง</th><th></th></tr></thead><tbody>' +
     (arr.length ? arr.map((x) => { const y = Math.floor(x.k / 100), mo = x.k % 100, dim = LPR.ymd(LPR.dayNum(mo === 12 ? y + 1 : y, mo === 12 ? 1 : mo + 1, 1) - 1).d; return `<tr><td>${TH_M[mo - 1]} ${be(y)}</td><td class="r num">${x.days.size}/${dim}</td><td class="r num">${x.enter}</td><td class="r num">${x.exit}</td><td class="r num">${fmt(x.rows)}</td><td>${esc([...x.src].join(', '))}</td><td class="r"><button class="btn sm danger" data-delmonth="${x.k}">ลบเดือนนี้</button></td></tr>`; }).join('')
       : '<tr><td colspan="7" class="c" style="padding:20px">ยังไม่มีข้อมูล</td></tr>') + '</tbody>';
-  $('gasUrl').value = SET.gasUrl || ''; $('gasAuto').checked = !!SET.gasAuto; $('gasRange').value = SET.syncRange || 'y0';
-  $('btnLinkFolder').hidden = !('showDirectoryPicker' in window);
-  if (ST.dirHandle) $('linkedInfo').innerHTML = `🔗 เชื่อมโฟลเดอร์ <b>${esc(ST.dirHandle.name)}</b> แล้ว — กดปุ่ม "ซิงค์" ด้านบนเพื่ออ่านไฟล์ใหม่`;
+  $('gasUrl').value = SET.gasUrl || ''; $('gasRange').value = SET.syncRange || 'y0'; renderSyncStatus();
 }
 async function deleteMonth(k) {
   const y = Math.floor(k / 100), mo = k % 100;
@@ -2972,7 +3025,9 @@ function handleEvents() {
   ['tabs', 'sideNav'].filter((id) => $(id)).forEach((id) => $(id).addEventListener('click', (e) => { const t = e.target.closest('.tab'); if (t) goTab(t.dataset.tab); }));
   $('qsForm').addEventListener('submit', (e) => { e.preventDefault(); const v = $('qsInput').value.trim(); if (!v) return; $('qPlate').value = v; ST.searchScope = 'all'; document.querySelectorAll('#segSearchScope button').forEach((x) => x.classList.toggle('on', x.dataset.scope === 'all')); goTab('search'); doSearch(); });
   // กลับมาออนไลน์ → ซิงค์ข้อมูลที่ค้าง
-  window.addEventListener('online', () => { if (SET.gasUrl && SET.gasAuto) syncDrive(false); });
+  window.addEventListener('online', () => { renderSyncStatus(); autoSync(60000); });
+  window.addEventListener('offline', renderSyncStatus);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) autoSync(SYNC_STALE); });
   $('segType').addEventListener('click', (e) => {
     const b = e.target.closest('button'); if (!b || !ST.db) return; const p = ST.period; p.type = b.dataset.type; p.userPicked = true;
     if (p.type === 'custom' && (p.from == null || p.to == null)) { p.to = p.anchor; p.from = Math.max(ST.db.minDay, p.anchor - 6); }
@@ -2989,26 +3044,18 @@ function handleEvents() {
   $('btnTheme').addEventListener('click', () => { const dark = document.documentElement.dataset.theme === 'dark'; SET.theme = dark ? 'light' : 'dark'; saveSettings(); applyLook(); render(); });
   if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if (SET.theme === 'auto') { applyLook(); render(); } });
   // Import
-  $('btnPickFolder').addEventListener('click', () => $('inFolder').click());
-  $('btnPickFiles').addEventListener('click', () => $('inFiles').click());
-  $('inFolder').addEventListener('change', async (e) => { await importFileList(e.target.files, 'local'); e.target.value = ''; });
+  // v13: ดึงจาก Google Drive อย่างเดียว — ช่อง inFiles ซ่อนไว้ไม่มีปุ่มเรียก (ใช้กับชุดทดสอบอัตโนมัติเท่านั้น)
   $('inFiles').addEventListener('change', async (e) => { await importFileList(e.target.files, 'local'); e.target.value = ''; });
-  const dz = $('dropZone');
-  ['dragenter', 'dragover'].forEach((ev) => dz.addEventListener(ev, (e) => { e.preventDefault(); dz.classList.add('over'); }));
-  ['dragleave', 'drop'].forEach((ev) => dz.addEventListener(ev, () => dz.classList.remove('over')));
-  dz.addEventListener('drop', async (e) => { e.preventDefault(); const files = await filesFromDrop(e.dataTransfer); await importFileList(files, 'local'); });
-  $('btnLinkFolder').addEventListener('click', async () => {
-    try { const h = await window.showDirectoryPicker({ id: 'lpr', mode: 'read' }); ST.dirHandle = h; try { await IDB.put('kv', h, 'dir'); } catch (e) {} $('btnSync').hidden = false; await syncLinkedFolder(true); }
-    catch (e) { if (e.name !== 'AbortError') toast('เชื่อมโฟลเดอร์ไม่ได้: ' + e.message, 'err'); }
-  });
-  $('btnSync').addEventListener('click', () => withBtn($('btnSync'), async () => { if (ST.dirHandle) await syncLinkedFolder(true); if (SET.gasUrl) await syncDrive(true); }));
+  // กันลากไฟล์มาวางแล้วเบราว์เซอร์เปิดไฟล์แทนแอป
+  ['dragover', 'drop'].forEach((ev) => window.addEventListener(ev, (e) => { e.preventDefault(); if (ev === 'drop') toast('แอปนี้ดึงข้อมูลจาก Google Drive อย่างเดียว — วางไฟล์ CSV ในโฟลเดอร์ "งานข้อมูล LPR App" บน Drive แล้วกดซิงค์', 'info', 7000); }));
+  $('btnSync').addEventListener('click', () => withBtn($('btnSync'), () => syncDrive(true)));
   $('gasUrl').addEventListener('change', () => {
     const u = $('gasUrl').value.trim(); $('gasErr').textContent = '';
     if (u && !validGasUrl(u)) { $('gasErr').textContent = 'URL ต้องขึ้นต้น https://script.google.com/ และลงท้าย /exec'; return; }
-    SET.gasUrl = u || DEFAULT_GAS_URL; if (!u) $('gasUrl').value = SET.gasUrl; // ลบช่องว่าง = กลับไปใช้ URL ที่ฝังไว้ saveSettings(); $('btnSync').hidden = !(SET.gasUrl || ST.dirHandle);
+    SET.gasUrl = u || DEFAULT_GAS_URL; if (!u) $('gasUrl').value = SET.gasUrl; // ลบช่องว่าง = กลับไปใช้ URL ที่ฝังไว้
+    saveSettings(); // v13: เดิมคำสั่งนี้ตกไปอยู่ในคอมเมนต์ → แก้ URL แล้วไม่ถูกบันทึก
   });
-  $('gasAuto').addEventListener('change', (e) => { SET.gasAuto = e.target.checked; saveSettings(); });
-  $('gasRange').addEventListener('change', (e) => { SET.syncRange = e.target.value; saveSettings(); toast('ช่วงที่ดึง: ' + SYNC_RANGES[SET.syncRange] + ' — กด "ซิงค์ข้อมูลตอนนี้"', 'info'); });
+  $('gasRange').addEventListener('change', (e) => { SET.syncRange = e.target.value; saveSettings(); toast('ช่วงที่ดึง: ' + SYNC_RANGES[SET.syncRange] + ' — กำลังซิงค์ให้', 'info'); renderSyncStatus(); syncDrive(true); });
   $('btnGasTest').addEventListener('click', () => withBtn($('btnGasTest'), async () => {
     $('gasUrl').dispatchEvent(new Event('change')); if ($('gasErr').textContent) return;
     try { const r = await api({ action: 'ping' }, 30000); toast(`เชื่อมต่อสำเร็จ · โฟลเดอร์ "${r.folder}" · Apps Script v${r.version}` + (+r.version !== BACKEND_VERSION ? ' (ต้องการ v' + BACKEND_VERSION + ')' : ''), +r.version === BACKEND_VERSION ? 'ok' : 'warn', 6000); }
@@ -3067,7 +3114,8 @@ function handleEvents() {
     } catch (err) { toast('นำเข้าการตั้งค่าไม่สำเร็จ: ' + (err.name === 'SyntaxError' ? 'ไฟล์ไม่ใช่รูปแบบ JSON ที่ถูกต้อง' : err.message), 'err', 7000); }
   });
   // เปิดแอปค้างไว้ทั้งวัน → ซิงค์เองทุก 30 นาที (เฉพาะตอนแท็บเปิดอยู่ ออนไลน์ และไม่มีงานอื่นค้าง)
-  setInterval(() => { if (SET.gasUrl && SET.gasAuto && !document.hidden && !APP_BUSY && !OP_NAME && navigator.onLine !== false) syncDrive(false); else updateChip(); }, 30 * 60000);
+  // เปิดค้างไว้ทั้งวัน → ซิงค์เองทุก 15 นาที · ตรวจทุกนาที (ถ้าเครื่องหลับ/แท็บซ่อน จะซิงค์ทันทีที่กลับมา)
+  setInterval(() => { autoSync(SYNC_EVERY); updateChip(); }, 60000);
   $('btnStaffCsv').addEventListener('click', () => { downloadBlob(new Blob(['\uFEFFทะเบียนที่ไม่นับเป็นลูกค้า\r\n' + (SET.staffPlates || []).map(csvCell).join('\r\n')], { type: 'text/csv;charset=utf-8' }), 'LPR_รายชื่อทะเบียนที่ไม่นับ.csv'); });
   $('btnRepCsv').addEventListener('click', exportRepCsv);
   // Search
@@ -3111,14 +3159,16 @@ async function init() {
   applyLook(); handleEvents(); Splash.start();
   try {
     ST.files = await loadStore();
-    try { const h = await IDB.get('kv', 'dir'); if (h && h.queryPermission) ST.dirHandle = h; } catch (e) {}
-  } catch (e) { toast('เปิดที่เก็บข้อมูลในเครื่องไม่ได้ (โหมดส่วนตัว?) — นำเข้าไฟล์ได้แต่จะไม่ถูกจำไว้', 'warn', 7000); }
-  $('btnSync').hidden = !(SET.gasUrl || ST.dirHandle);
+    try { await IDB.del('kv', 'dir'); } catch (e) {} // v13: เลิกเชื่อมโฟลเดอร์ในเครื่อง (ดึงจาก Drive อย่างเดียว)
+  } catch (e) { toast('เปิดที่เก็บข้อมูลในเครื่องไม่ได้ (โหมดส่วนตัว?) — ซิงค์ได้แต่ข้อมูลจะไม่ถูกจำไว้', 'warn', 7000); }
+  $('btnSync').hidden = false;
   if (!ST.files.length) ST.tab = 'import';
   await rebuild('เปิดแอป');
   refreshSharedUI();
-  if (SET.gasUrl && SET.gasAuto && navigator.onLine !== false) syncDrive(false); // จบแล้วดึงรายชื่อร่วมต่อ
-  else { if (SET.gasUrl) sharedFetch(true); if (ST.dirHandle) syncLinkedFolder(false).catch(() => {}); }
+  renderSyncStatus();
+  // v13: ดึงจาก Drive ทุกครั้งที่เปิดแอป (บังคับอัตโนมัติ ไม่มีสวิตช์ปิด) — จบแล้วดึงรายชื่อร่วมต่อ
+  if (SET.gasUrl && navigator.onLine !== false) syncDrive(false);
+  else if (SET.gasUrl) sharedFetch(true);
 }
 init();
 
