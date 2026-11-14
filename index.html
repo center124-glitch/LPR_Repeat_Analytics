@@ -3,7 +3,7 @@
 <head>
 <!--
   LPR Repeat Analytics — ระบบตรวจหาทะเบียนรถยนต์เข้าใช้บริการซ้ำ (ศูนย์การค้าซีคอนบางแค)
-  ไฟล์: LPR_Repeat_Analytics_v13.html  ·  คู่กับ Code_LPR_v3.gs (BACKEND_VERSION = 3)
+  ไฟล์: LPR_Repeat_Analytics_v14.html  ·  คู่กับ Code_LPR_v3.gs (BACKEND_VERSION = 3)
   ─────────────────────────────────────────────────────────────────────────────
   สรุป PROJECT (ย่อ — ฉบับเต็มอยู่ใน PROJECT.md)
   • ข้อมูลต้นทาง: โฟลเดอร์ D:\งานข้อมูล LPR\LPR ปี.xx\xx.เดือน ...\YYYYMMDD_enter.csv / YYYYMMDD_exit.csv
@@ -16,6 +16,8 @@
   • ตัวเลขอ้างอิง (ตรวจด้วย Python แล้ว): 1–11 ต.ค. 69 รถเข้า 92,444 ครั้ง · 68,303 คัน · กลับมาซ้ำ (≥ 2 วัน) 11,877 คัน
   ─────────────────────────────────────────────────────────────────────────────
   ประวัติเวอร์ชัน
+  v14 (14 พ.ย. 2569) — ตรวจทานรอบ v13: รายงาน/ข้อสังเกต/สรุปผู้บริหาร/การ์ด LINE ระบุงวดเทียบตามโหมด (งวดก่อน หรือ ช่วงเดียวกันปีก่อน) ให้ตรงกันทุกจุด
+       · รายงานหน้า 3 ระบุที่มาข้อมูล (Google Drive + เวลาซิงค์ล่าสุด + จำนวนรายชื่อไม่นับ) · แถบเตือนเมื่อข้อมูลล่าสุดเก่ากว่า 1 วัน
   v13 (14 พ.ย. 2569) — ดึงข้อมูลจาก Google Drive อย่างเดียว (อัตโนมัติ: เปิดแอป/ทุก 15 นาที/กลับมาที่แอป/ออนไลน์) · เอานำเข้าจากเครื่อง/เชื่อมโฟลเดอร์ออก
        · ข้อมูลในแอปตรงกับ Drive (ไฟล์ที่ลบจาก Drive ลบจากแอปด้วย มีกันพลาด) · หน้า "ข้อมูล Drive" แสดงสถานะซิงค์ · แก้ URL ไม่ถูกบันทึก
   v12 (14 พ.ย. 2569) — การ์ด KPI สีเข้ม 30% + แอนิเมชัน · พื้นหลังแผงเคลื่อนไหว · ตรวจทานระบบรายชื่อร่วม
@@ -1399,7 +1401,7 @@ if (typeof module !== 'undefined') module.exports = LPR;
 /* ===================================================================
  * APP — UI / นำเข้าข้อมูล / รายงาน / หน้าโลโก้
  * =================================================================== */
-const APP_VERSION = 13;
+const APP_VERSION = 14;
 const BACKEND_VERSION = 3;          // ต้องตรงกับ VERSION ใน Code_LPR_v2.gs
 let APP_BUSY = false;
 // URL ของ Apps Script (Code_LPR_v2.gs ที่ Deploy แล้ว) — ฝังไว้ให้ทุกเครื่องเปิดแล้วซิงค์ได้ทันที ไม่ต้องวาง URL เอง
@@ -1836,6 +1838,9 @@ function getAnalysis(a, b, top) {
   let v = ST.cache.get(k);
   if (v) { ST.cache.delete(k); ST.cache.set(k, v); return v; } // LRU: ย้ายไปท้าย
   v = LPR.analyze(ST.db, a, b, engineOpts(), top ? true : 0);
+  // v14: วันที่ยังมาไม่ถึง (วันนี้ซึ่งยังไม่จบวัน และอนาคต) ไม่ใช่ "ไฟล์ขาด" — แยกออกเพื่อไม่ให้รายงาน/ข้อเสนอแนะแจ้งขาดไฟล์เกินจริง
+  // (ตัวเลขทุกตัวไม่เปลี่ยน เปลี่ยนเฉพาะการนับวันที่ "ไม่มีไฟล์")
+  { const td = todayBKK(); const fut = v.missingDays.filter((d) => d >= td); v.futureDays = fut.length; v.missingDays = v.missingDays.filter((d) => d < td); v.elapsedDays = v.calDays - fut.length; }
   ST.cache.set(k, v);
   while (ST.cache.size > 24) ST.cache.delete(ST.cache.keys().next().value); // จำกัดหน่วยความจำ (รายชื่อรถทั้งปีใหญ่)
   return v;
@@ -1923,7 +1928,7 @@ function renderInner() {
   const Rc = C.curB < b ? getAnalysis(a, C.curB, false) : R; // งวดยังไม่จบ → เทียบเฉพาะวันที่มีข้อมูลเท่ากัน
   $('periodLabel').textContent = periodText(ST.period.type, a, b);
   const cov = $('covBadge'); cov.hidden = false;
-  cov.textContent = 'มีข้อมูล ' + R.nDataDays + '/' + R.calDays + ' วัน'; cov.className = 'cov' + (R.nDataDays < R.calDays ? ' warn' : '');
+  cov.textContent = 'มีข้อมูล ' + R.nDataDays + '/' + R.elapsedDays + ' วัน' + (R.futureDays ? ' (ยังไม่ถึง ' + R.futureDays + ' วัน)' : ''); cov.className = 'cov' + (R.missingDays.length ? ' warn' : '');
   $('cmpLabel').textContent = !P.nDataDays ? (C.yoy ? 'ไม่มีข้อมูลปีก่อนในแอป — ตั้ง "ช่วงข้อมูลที่ดึงจาก Drive" เป็น "ปีนี้ + ปีที่แล้ว" แล้วซิงค์' : 'ไม่มีข้อมูลช่วงก่อนหน้าให้เทียบ') : C.label + (P.nDataDays !== Rc.nDataDays ? ` ⚠ ช่วงเทียบมีข้อมูล ${P.nDataDays} วัน (เทียบเฉพาะค่าเฉลี่ยต่อวัน)` : '');
   if (ST.tab === 'overview') renderOverview(R, P, Rc);
   else if (ST.tab === 'repeat') renderRepeat(R);
@@ -1947,7 +1952,10 @@ function renderSrcWarn() {
   const n = ST.db.issues.reduce((t, x) => t + x.bad, 0);
   const rg = curRange(), t = todayBKK();
   const partial = rg && rg[0] <= t && rg[1] >= t && ST.db.dayInfo.has(t) && ['overview', 'repeat', 'dwell', 'quality'].includes(ST.tab);
-  el.innerHTML = (wh.length && ST.tab === 'overview' ? `<div class="banner err"><span>👁️</span><span>พบทะเบียนเฝ้าระวัง <b>${wh.length}</b> คันในข้อมูลวันล่าสุด (${esc(dShort(ST.db.maxDay))}): ${wh.slice(0, 5).map((w) => '<b>' + esc(w.plate) + '</b> ' + esc(tSec(w.last - w.lastDay * 86400).slice(0, 5)) + ' น.').join(', ')} <a href="#" onclick="goTab('watch');return false">ดูรายละเอียด ›</a></span></div>` : '') + (partial ? `<div class="banner info"><span>⏳</span><span>ช่วงนี้รวม "วันนี้" ซึ่งยังเก็บข้อมูลไม่ครบวัน — ตัวเลขของวันนี้จะเพิ่มขึ้นเมื่อซิงค์ครั้งถัดไป</span></div>` : '') + (n ? `<div class="banner"><span>⚠️</span><span>ข้อมูลต้นทาง ${fmt(n)} จุด อ่านไม่ได้ (เช่น ไม่มีเวลา) — ระบบข้ามแถวเหล่านี้ <a href="#" onclick="goTab('quality');return false">ดูรายละเอียด</a></span></div>` : '');
+  // v14: ดึงจาก Drive อย่างเดียว → ถ้าข้อมูลล่าสุดเก่ากว่าเมื่อวาน แปลว่าไฟล์ใหม่ยังไม่ขึ้น Drive (ไม่ใช่ว่าไม่มีรถ)
+  const lag = t - ST.db.maxDay;
+  const stale = lag >= 2 && ST.tab === 'overview' ? `<div class="banner info"><span>🕒</span><span>ข้อมูลล่าสุดในแอปคือ <b>${esc(dLong(ST.db.maxDay))}</b> (${lag} วันก่อน) — ไฟล์ LPR วันหลังจากนั้นยังไม่อยู่ใน Google Drive หรือยังไม่ได้ซิงค์ · ${esc(lastSyncTxt().replace(/<br>/g, ' ').trim() || 'ยังไม่เคยซิงค์')} <a href="#" onclick="syncDrive(true);return false">ซิงค์ตอนนี้ ›</a></span></div>` : '';
+  el.innerHTML = stale + (wh.length && ST.tab === 'overview' ? `<div class="banner err"><span>👁️</span><span>พบทะเบียนเฝ้าระวัง <b>${wh.length}</b> คันในข้อมูลวันล่าสุด (${esc(dShort(ST.db.maxDay))}): ${wh.slice(0, 5).map((w) => '<b>' + esc(w.plate) + '</b> ' + esc(tSec(w.last - w.lastDay * 86400).slice(0, 5)) + ' น.').join(', ')} <a href="#" onclick="goTab('watch');return false">ดูรายละเอียด ›</a></span></div>` : '') + (partial ? `<div class="banner info"><span>⏳</span><span>ช่วงนี้รวม "วันนี้" ซึ่งยังเก็บข้อมูลไม่ครบวัน — ตัวเลขของวันนี้จะเพิ่มขึ้นเมื่อซิงค์ครั้งถัดไป</span></div>` : '') + (n ? `<div class="banner"><span>⚠️</span><span>ข้อมูลต้นทาง ${fmt(n)} จุด อ่านไม่ได้ (เช่น ไม่มีเวลา) — ระบบข้ามแถวเหล่านี้ <a href="#" onclick="goTab('quality');return false">ดูรายละเอียด</a></span></div>` : '');
 }
 function openNearDaily() { $('repMin').value = 'near'; $('repSort').value = 'days'; ST.rep.page = 0; goTab('repeat'); }
 window.openNearDaily = openNearDaily;
@@ -2122,11 +2130,13 @@ function suspectTxt(d) {
   return [s.low ? 'รายการน้อยกว่า 40% ของค่ากลาง (' + fmt(o.enterRaw) + ' จากปกติ ~' + fmt(s.median) + ')' : '', s.early ? 'รายการสุดท้ายเวลา ' + tSec(s.lastSec).slice(0, 5) + ' น.' : ''].filter(Boolean).join(' · ');
 }
 // ----- Insight: ทุกประโยคมาจากตัวเลขที่คำนวณได้ (ไม่สรุปเกินข้อมูล) -----
+// คำเรียกงวดเทียบตามโหมด (งวดก่อน / ช่วงเดียวกันปีก่อน) — ใช้ทั้งหน้าจอ รายงาน และการ์ด LINE ให้ตรงกัน
+function cmpWord() { return SET.cmpMode === 'yoy' ? 'ช่วงเดียวกันปีก่อน' : 'งวดก่อน'; }
 function insights(R, P, Rc) {
   const out = []; const day = ST.period.type === 'day'; const hasP = P && P.nDataDays > 0; const eq = hasP && P.nDataDays === Rc.nDataDays;
   if (!R.nDataDays) return [{ e: '📭', c: '#64748b', t: 'ไม่มีไฟล์ข้อมูลในช่วงนี้' }];
   if (!R.visits) return [{ e: '📭', c: '#64748b', t: 'ไม่มีรถเข้าที่นับเป็นลูกค้าในช่วงนี้' }];
-  out.push({ e: '🔁', c: '#1f6f8b', t: `${repLabel(R)} <b>${fmt(R.repeat)}</b> คัน จาก ${fmt(R.unique)} คัน (<b>${pctS(R.repeatRate)}</b>)` + (eq ? ` ${chg(Rc.repeatRate, P.repeatRate, 'pp')} เทียบช่วงก่อน` : '') });
+  out.push({ e: '🔁', c: '#1f6f8b', t: `${repLabel(R)} <b>${fmt(R.repeat)}</b> คัน จาก ${fmt(R.unique)} คัน (<b>${pctS(R.repeatRate)}</b>)` + (eq ? ` ${chg(Rc.repeatRate, P.repeatRate, 'pp')} เทียบ${cmpWord()}` : '') });
   if (R.repeatMode === 'multiDay' && R.sameDayRep) out.push({ e: '🔄', c: '#26a69a', t: `เข้า-ออกหลายรอบในวันเดียว <b>${fmt(R.sameDayRep)}</b> คัน — ไม่นับเป็น "กลับมาซ้ำ" (ดูเป็นข้อมูลประกอบ)` });
   if (!day) {
     const loyal = R.freqDays.slice(3).reduce((t, x) => t + x.count, 0);
@@ -2138,7 +2148,7 @@ function insights(R, P, Rc) {
   if (R.gates.length) { const g = R.gates.slice().sort((a, b) => b.count - a.count)[0]; out.push({ e: '🚪', c: '#26a69a', t: `ประตูที่ใช้มากสุด <b>${esc(g.name)}</b> ${pctS(g.count / R.visits)} ของรถเข้า` }); }
   const lb = R.returning;
   if (lb.lookbackDataDays >= 7) out.push({ e: '💚', c: '#10b981', t: `${pctS(R.unique ? lb.before / R.unique : null)} ของรถในช่วงนี้เคยมาภายใน ${lb.lookbackDays} วันก่อนหน้า` + (lb.lookbackDataDays < lb.lookbackDays ? ` (ข้อมูลย้อนหลังมี ${lb.lookbackDataDays} วัน — ค่าจริงอาจสูงกว่านี้)` : '') });
-  if (hasP) { const d = chgPlain(Rc.avgVisitsPerDay, P.avgVisitsPerDay); if (d != null && Math.abs(d) >= 5) out.push({ e: d > 0 ? '📈' : '📉', c: d > 0 ? '#10b981' : '#e11d48', t: `รถเข้าเฉลี่ยต่อวัน${d > 0 ? 'เพิ่มขึ้น' : 'ลดลง'} <b>${fmt1(Math.abs(d))}%</b> เทียบช่วงก่อน` }); }
+  if (hasP) { const d = chgPlain(Rc.avgVisitsPerDay, P.avgVisitsPerDay); if (d != null && Math.abs(d) >= 5) out.push({ e: d > 0 ? '📈' : '📉', c: d > 0 ? '#10b981' : '#e11d48', t: `รถเข้าเฉลี่ยต่อวัน${d > 0 ? 'เพิ่มขึ้น' : 'ลดลง'} <b>${fmt1(Math.abs(d))}%</b> เทียบ${cmpWord()}` }); }
   if (R.dwellMedian != null) out.push({ e: '🅿️', c: '#f59e0b', t: `เวลาจอดมัธยฐาน <b>${durTxt(R.dwellMedian)}</b>` + (R.dwellRate < 0.7 ? ` · จับคู่เข้า–ออกได้ ${pctS(R.dwellRate)} (กล้องขาออกอ่านทะเบียนไม่ตรงบางส่วน)` : '') });
   const exc = R.groups.filter((g) => g.excluded).reduce((t, g) => t + g.visits, 0);
   if (exc || R.invalid || R.excludedPlates) out.push({ e: '🪪', c: '#64748b', t: `ไม่นับรถพนักงาน/กลุ่มที่ตั้งไว้ ${fmt(exc)} ครั้ง` + (R.excludedPlates ? `, รายชื่อทะเบียนที่ไม่นับ ${fmt(R.excludedPlates)} ครั้ง` : '') + ` และทะเบียนอ่านไม่สมบูรณ์ ${fmt(R.invalid)} ครั้ง` });
@@ -2612,7 +2622,7 @@ function doSearch() {
 function renderDwell(R, P) {
   const hasP = P.nDataDays > 0;
   $('dwKpis').innerHTML = [
-    kpiCard('#f59e0b', IC.clock, 'เวลาจอดเฉลี่ย', durTxt(R.dwellAvg), '', hasP ? chg(R.dwellAvg, P.dwellAvg) + ' เทียบช่วงก่อน' : ''),
+    kpiCard('#f59e0b', IC.clock, 'เวลาจอดเฉลี่ย', durTxt(R.dwellAvg), '', hasP ? chg(R.dwellAvg, P.dwellAvg) + ' เทียบ' + cmpWord() : ''),
     kpiCard('#1f6f8b', IC.clock, 'มัธยฐาน', durTxt(R.dwellMedian), '', 'ครึ่งหนึ่งของรถจอดไม่เกินเวลานี้'),
     kpiCard('#10b981', IC.id, 'จับคู่เข้า–ออกได้', pctS(R.dwellRate).replace('%', ''), '%', fmt(R.dwellMatched) + ' จาก ' + fmt(R.visits) + ' ครั้ง'),
     kpiCard('#e11d48', IC.car, 'จอดเกิน 8 ชม.', fmt(R.dwellBuckets[5].count), 'ครั้ง', pctS(R.dwellMatched ? R.dwellBuckets[5].count / R.dwellMatched : null) + ' ของที่จับคู่ได้')
@@ -2636,7 +2646,7 @@ function renderQuality(R, a, b) {
     rows.push(`<tr><td class="num">${dNum(d)}</td><td>${TH_D[LPR.ymd(d).w]}</td><td>${inf.enterFile ? '<span class="tag em">มี</span>' : '<span class="tag ro">ไม่มี</span>'} ${inf.exitFile ? '<span class="tag em">มี</span>' : '<span class="tag ro">ไม่มี</span>'}${inf.suspect ? ` <span class="tag am" title="${esc(suspectTxt(d))}">⚠ อาจไม่ครบวัน</span>` : ''}${!isD && inf.enterRaw ? ' <span class="tag mute">แถวติดมากับไฟล์วันอื่น — ไม่นับ</span>' : ''}${inf.enterFile && !inf.enterRaw ? ' <span class="tag ro">ไฟล์ว่าง</span>' : ''}</td><td class="r num">${fmt(inf.enterRaw)}</td><td class="r num">${fmt(inf.exitRaw)}</td><td class="r num">${fmt(inf.dupEnter || 0)} / ${fmt(inf.dupExit || 0)}</td><td class="r num">${fmt(inf.invalid)}</td><td class="r num">${inf.enterRaw ? pctS(inf.invalid / inf.enterRaw) : '-'}</td></tr>`);
   }
   $('qKpis').innerHTML = [
-    kpiCard('#10b981', IC.id, 'วันที่มีข้อมูล', R.nDataDays + '/' + R.calDays, 'วัน', R.missingDays.length ? '⚠ ไม่มีไฟล์ ' + R.missingDays.length + ' วัน' : 'ครบทุกวัน'),
+    kpiCard('#10b981', IC.id, 'วันที่มีข้อมูล', R.nDataDays + '/' + R.elapsedDays, 'วัน', R.missingDays.length ? '⚠ ไม่มีไฟล์ ' + R.missingDays.length + ' วัน' : 'ครบทุกวัน'),
     kpiCard('#7e57c2', IC.car, 'รายการอ่านได้ (เข้า/ออก)', fmt(rawE), '', 'ออก ' + fmt(rawX) + ' รายการ'),
     kpiCard('#f59e0b', IC.rep, 'อ่านซ้ำที่ตัดออก', fmt(dupE + dupX), 'รายการ', 'เข้า ' + fmt(dupE) + ' · ออก ' + fmt(dupX) + ' (ภายใน ' + SET.dedupMin + ' นาที)'),
     kpiCard('#43a047', IC.pct, 'ทะเบียนอ่านไม่สมบูรณ์ (ขาเข้า)', fmt(inv), 'รายการ', pctS(rawE ? inv / rawE : null))
@@ -2737,9 +2747,9 @@ function recommendations(R, P, Rc) {
   const out = []; const eq = P && P.nDataDays > 0 && P.nDataDays === Rc.nDataDays;
   if (R.missingDays.length || R.missingExit.length) {
     const ds = R.missingDays.concat(R.missingExit).sort((x, y) => x - y);
-    out.push({ pri: 'สูง', topic: 'ความครบถ้วนของข้อมูล', text: `ติดตามไฟล์ LPR ที่ขาด ${ds.length} วัน (${ds.slice(0, 4).map(dShortNoY).join(', ')}${ds.length > 4 ? ' …' : ''}) แล้วนำเข้า/ซิงค์ใหม่ เพื่อให้ยอดรวมครบถ้วน`, ref: `ไม่มีไฟล์ขาเข้า ${R.missingDays.length} วัน · ขาออก ${R.missingExit.length} วัน` });
+    out.push({ pri: 'สูง', topic: 'ความครบถ้วนของข้อมูล', text: `ติดตามไฟล์ LPR ที่ขาด ${ds.length} วัน (${ds.slice(0, 4).map(dShortNoY).join(', ')}${ds.length > 4 ? ' …' : ''}) แล้ววางไฟล์ในโฟลเดอร์ Google Drive (แอปซิงค์ให้อัตโนมัติ) เพื่อให้ยอดรวมครบถ้วน`, ref: `ไม่มีไฟล์ขาเข้า ${R.missingDays.length} วัน · ขาออก ${R.missingExit.length} วัน` });
   }
-  if (R.suspectDays.length) out.push({ pri: 'สูง', topic: 'ข้อมูลอาจไม่ครบวัน', text: `ตรวจไฟล์ LPR ของวันที่ ${R.suspectDays.slice(0, 4).map(dShortNoY).join(', ')}${R.suspectDays.length > 4 ? ' …' : ''} ว่าส่งออกครบทั้งวันหรือไม่ แล้วนำเข้าใหม่`, ref: suspectTxt(R.suspectDays[0]).slice(0, 60) });
+  if (R.suspectDays.length) out.push({ pri: 'สูง', topic: 'ข้อมูลอาจไม่ครบวัน', text: `ตรวจไฟล์ LPR ของวันที่ ${R.suspectDays.slice(0, 4).map(dShortNoY).join(', ')}${R.suspectDays.length > 4 ? ' …' : ''} ว่าส่งออกครบทั้งวันหรือไม่ แล้ววางไฟล์ฉบับครบใน Google Drive แทนไฟล์เดิม`, ref: suspectTxt(R.suspectDays[0]).slice(0, 60) });
   if (R.nearDaily) out.push({ pri: R.nearDaily >= 20 ? 'สูง' : 'กลาง', topic: 'จัดกลุ่มรถประจำ', text: `ตรวจสอบรถ ${fmt(R.nearDaily)} คันที่มาเกือบทุกวันแต่ไม่อยู่ในกลุ่มพนักงาน หากเป็นพนักงาน/ผู้เช่า ให้ลงทะเบียนกลุ่มในระบบ LPR เพื่อไม่ให้นับเป็นลูกค้าเข้าซ้ำ`, ref: `มา ≥ ${R.nearDailyMin}/${R.nDataDays} วัน` });
   const long = R.dwellBuckets[5].count, longShare = R.dwellMatched ? long / R.dwellMatched : 0;
   if (long && longShare >= 0.05) out.push({ pri: 'กลาง', topic: 'รถจอดนาน', text: `ตรวจสอบรถจอดเกิน 8 ชั่วโมง ${fmt(long)} ครั้ง ว่าเป็นรถพนักงาน รถจอดค้างคืนที่ได้รับอนุญาต หรือรถจอดผิดวัตถุประสงค์`, ref: `${pctS(longShare)} ของที่จับคู่ได้` });
@@ -2750,20 +2760,20 @@ function recommendations(R, P, Rc) {
     const ph = R.hourly.indexOf(Math.max(...R.hourly)); const g = R.gates.slice().sort((x, y) => y.count - x.count)[0];
     if (g) out.push({ pri: 'ต่ำ', topic: 'การจัดกำลังเจ้าหน้าที่', text: `พิจารณาจัดเจ้าหน้าที่อำนวยความสะดวกที่ประตู ${g.name} ในช่วง ${pad(ph)}:00–${pad(ph + 1)}:00 น. ซึ่งมีรถเข้าหนาแน่นที่สุด`, ref: `${g.name} ${pctS(g.count / R.visits)} ของรถเข้า` });
   }
-  if (eq) { const d = chgPlain(Rc.repeatRate, P.repeatRate, 'pp'); if (d != null && Math.abs(d) >= 2) out.push({ pri: 'กลาง', topic: 'อัตราเข้าซ้ำเปลี่ยนแปลง', text: `อัตราเข้าซ้ำ${d > 0 ? 'เพิ่มขึ้น' : 'ลดลง'} ${fmt1(Math.abs(d))} จุดจากช่วงที่เทียบ ควรตรวจสอบกิจกรรม/โปรโมชัน หรือการเปลี่ยนแปลงกลุ่มสมาชิกในช่วงดังกล่าว`, ref: `${pctS(P.repeatRate)} → ${pctS(Rc.repeatRate)}` }); }
-  if (R.returning.lookbackDataDays < R.returning.lookbackDays) out.push({ pri: 'ต่ำ', topic: 'ข้อมูลย้อนหลัง', text: `นำเข้าข้อมูลย้อนหลังให้ครบ ${R.returning.lookbackDays} วันก่อนช่วงรายงาน เพื่อให้ตัวชี้วัด "ลูกค้าเก่า" สมบูรณ์`, ref: `มี ${R.returning.lookbackDataDays}/${R.returning.lookbackDays} วัน` });
+  if (eq) { const d = chgPlain(Rc.repeatRate, P.repeatRate, 'pp'); if (d != null && Math.abs(d) >= 2) out.push({ pri: 'กลาง', topic: 'อัตราเข้าซ้ำเปลี่ยนแปลง', text: `อัตราเข้าซ้ำ${d > 0 ? 'เพิ่มขึ้น' : 'ลดลง'} ${fmt1(Math.abs(d))} จุดจาก${cmpWord()} ควรตรวจสอบกิจกรรม/โปรโมชัน หรือการเปลี่ยนแปลงกลุ่มสมาชิกในช่วงดังกล่าว`, ref: `${pctS(P.repeatRate)} → ${pctS(Rc.repeatRate)}` }); }
+  if (R.returning.lookbackDataDays < R.returning.lookbackDays) out.push({ pri: 'ต่ำ', topic: 'ข้อมูลย้อนหลัง', text: `ตั้งช่วงซิงค์ให้ครอบคลุมข้อมูลย้อนหลัง ${R.returning.lookbackDays} วันก่อนช่วงรายงาน เพื่อให้ตัวชี้วัด "ลูกค้าเก่า" สมบูรณ์`, ref: `มี ${R.returning.lookbackDataDays}/${R.returning.lookbackDays} วัน` });
   if (!out.length) out.push({ pri: 'ต่ำ', topic: 'ภาพรวม', text: 'ไม่พบประเด็นที่ต้องดำเนินการเร่งด่วน ติดตามตัวชี้วัดตามรอบปกติ', ref: '-' });
   const order = { 'สูง': 0, 'กลาง': 1, 'ต่ำ': 2 }; return out.sort((x, y) => order[x.pri] - order[y.pri]).slice(0, 7);
 }
 // ย่อหน้าสรุปผู้บริหาร (ภาษาทางการ) — ประกอบจากตัวเลขจริงเท่านั้น
 function execSummary(R, P, Rc, ptxt) {
-  if (!R.visits) return `ในช่วง${esc(ptxt)} ไม่มีรถยนต์เข้าที่นับเป็นลูกค้า (มีข้อมูล ${R.nDataDays}/${R.calDays} วัน)`;
+  if (!R.visits) return `ในช่วง${esc(ptxt)} ไม่มีรถยนต์เข้าที่นับเป็นลูกค้า (มีข้อมูล ${R.nDataDays}/${R.elapsedDays} วัน)`;
   const eq = P && P.nDataDays > 0 && P.nDataDays === Rc.nDataDays, hasP = P && P.nDataDays > 0, day = ST.period.type === 'day';
   let t = `ในช่วง${esc(ptxt)} ระบบอ่านป้ายทะเบียนอัตโนมัติ (LPR) บันทึกรถยนต์เข้าศูนย์การค้าจำนวน <b>${fmt(R.visits)}</b> ครั้ง จากรถ <b>${fmt(R.unique)}</b> คัน` + (day ? '' : ` เฉลี่ยวันละ ${fmt(R.avgVisitsPerDay)} ครั้ง`) + ` (ตัดการอ่านซ้ำของกล้องและรถกลุ่มพนักงานแล้ว) `;
   t += R.repeatMode === 'sameDay'
     ? `ในจำนวนนี้มีรถที่เข้าใช้บริการซ้ำภายในวันเดียวกัน <b>${fmt(R.repeat)}</b> คัน คิดเป็นร้อยละ <b>${fmt1((R.repeatRate || 0) * 100)}</b> ของรถทั้งหมด`
     : `ในจำนวนนี้มีรถที่กลับมาใช้บริการซ้ำต่างวัน <b>${fmt(R.repeat)}</b> คัน คิดเป็นร้อยละ <b>${fmt1((R.repeatRate || 0) * 100)}</b> ของรถทั้งหมด มาเฉลี่ย ${fmt1(R.repeatAvgDays)} วันต่อคัน`;
-  if (eq) { const d = chgPlain(Rc.repeatRate, P.repeatRate, 'pp'); t += ` ซึ่ง${d > 0 ? 'เพิ่มขึ้น' : d < 0 ? 'ลดลง' : 'ทรงตัว'}${d ? ' ' + fmt1(Math.abs(d)) + ' จุด' : ''}เมื่อเทียบกับงวดก่อน`; }
+  if (eq) { const d = chgPlain(Rc.repeatRate, P.repeatRate, 'pp'); t += ` ซึ่ง${d > 0 ? 'เพิ่มขึ้น' : d < 0 ? 'ลดลง' : 'ทรงตัว'}${d ? ' ' + fmt1(Math.abs(d)) + ' จุด' : ''}เมื่อเทียบกับ${cmpWord()}`; }
   if (hasP) { const d = chgPlain(Rc.avgVisitsPerDay, P.avgVisitsPerDay); if (d != null) t += ` ขณะที่รถเข้าเฉลี่ยต่อวัน${d > 0 ? 'เพิ่มขึ้น' : d < 0 ? 'ลดลง' : 'เท่าเดิม'}${d ? 'ร้อยละ ' + fmt1(Math.abs(d)) : ''}`; }
   const ph = R.hourly.indexOf(Math.max(...R.hourly)); const g = R.gates.slice().sort((x, y) => y.count - x.count)[0];
   t += ` ช่วงเวลาที่มีรถเข้าหนาแน่นที่สุดคือ ${pad(ph)}:00–${pad(ph + 1)}:00 น.` + (g ? ` และประตูที่ใช้มากที่สุดคือ ${esc(g.name)} (ร้อยละ ${fmt1((g.count / R.visits) * 100)})` : '');
@@ -2786,7 +2796,9 @@ function buildReport(withAppendix) {
   const N = 3 + dataPg + apPages;
   const hasP = P.nDataDays > 0, eq = hasP && P.nDataDays === Rc.nDataDays;
   const head = (sub) => `<div class="rh"><img src="${logo}" alt=""><div><div class="tt">รายงานสรุปการตรวจรถยนต์เข้าใช้บริการซ้ำ (LPR) ${titleType}</div><div class="st">${esc(SET.org)} · ${esc(sub)}</div></div><div class="meta">เลขที่ ${docNo}<br>จัดทำ ${made}<br>ข้อมูล ณ วันที่ ${dShort(ST.db.maxDay)}</div></div>`;
-  const foot = (i) => `<div class="rf"><span>LPR Repeat Analytics v${APP_VERSION} · ${esc(SET.org)} · ${esc(ptxt)}</span><span>${i === N ? 'สิ้นสุดรายงาน · ' : ''}หน้า ${i}/${N}</span></div>`;
+  // ท้ายกระดาษทุกหน้า: ที่มาข้อมูล (Google Drive + เวลาซิงค์ล่าสุด) เพื่อให้ผู้อ่านรู้ว่าตัวเลขมาจากข้อมูลชุดไหน
+  const srcTxt = 'ที่มาข้อมูล: Google Drive' + (lastSyncAt() ? ' (ซิงค์ ' + absTxtMs(lastSyncAt()) + ' น.)' : '') + ' · รายชื่อไม่นับ ' + fmt((SET.staffPlates || []).length) + ' ทะเบียน';
+  const foot = (i) => `<div class="rf"><span>LPR Repeat Analytics v${APP_VERSION} · ${esc(SET.org)} · ${esc(srcTxt)}</span><span>${i === N ? 'สิ้นสุดรายงาน · ' : ''}หน้า ${i}/${N}</span></div>`;
   const H = (no, t, extra) => `<h4><span class="no">${no}</span>${t}${extra || ''}</h4>`;
   const K = kpiData(R, P, Rc);
   const colr = (d) => (d == null ? '#6b7a70' : d > 0 ? '#047857' : d < 0 ? '#be123c' : '#6b7a70');
@@ -2803,8 +2815,8 @@ function buildReport(withAppendix) {
     ['เวลาจอดเฉลี่ย', durTxt(Rc.dwellAvg), hasP ? durTxt(P.dwellAvg) : '-', hasP ? chgPlain(Rc.dwellAvg, P.dwellAvg) : null, false],
     ['วันที่มีข้อมูล', Rc.nDataDays + ' วัน', hasP ? P.nDataDays + ' วัน' : '-', null, false]
   ];
-  const cmpTbl = `<table><thead><tr><th>ตัวชี้วัด</th><th class="r">ช่วงนี้${Rc !== R ? '*' : ''}</th><th class="r">งวดเทียบ</th><th class="r">เปลี่ยนแปลง</th></tr></thead><tbody>${rows.map((r) => `<tr><td>${r[0]}</td><td class="r"><b>${r[1]}</b></td><td class="r">${r[2]}</td><td class="r">${r[3] == null ? '<span style="color:#9ca3af">-</span>' : arrow(r[3], r[4])}</td></tr>`).join('')}</tbody></table>
-    <div class="note" style="margin-top:4px">งวดเทียบ: ${hasP ? esc(C.label.replace(/^เทียบ /, '')) : 'ไม่มีข้อมูล'}${Rc !== R ? ' · *ตัดถึงวันล่าสุดที่มีข้อมูลเพื่อให้จำนวนวันเท่ากัน' : ''}${hasP && !eq ? ' · จำนวนวันที่มีข้อมูลไม่เท่ากัน จึงเทียบเฉพาะค่าเฉลี่ยต่อวัน' : ''}</div>`;
+  const cmpTbl = `<table><thead><tr><th>ตัวชี้วัด</th><th class="r">ช่วงนี้${Rc !== R ? '*' : ''}</th><th class="r">${C.yoy ? 'ปีก่อน' : 'งวดก่อน'}</th><th class="r">เปลี่ยนแปลง</th></tr></thead><tbody>${rows.map((r) => `<tr><td>${r[0]}</td><td class="r"><b>${r[1]}</b></td><td class="r">${r[2]}</td><td class="r">${r[3] == null ? '<span style="color:#9ca3af">-</span>' : arrow(r[3], r[4])}</td></tr>`).join('')}</tbody></table>
+    <div class="note" style="margin-top:4px">${C.yoy ? 'ช่วงเทียบ (ปีก่อน)' : 'งวดเทียบ'}: ${hasP ? esc(C.label.replace(/^เทียบ /, '')) : 'ไม่มีข้อมูล'}${Rc !== R ? ' · *ตัดถึงวันล่าสุดที่มีข้อมูลเพื่อให้จำนวนวันเท่ากัน' : ''}${hasP && !eq ? ' · จำนวนวันที่มีข้อมูลไม่เท่ากัน จึงเทียบเฉพาะค่าเฉลี่ยต่อวัน' : ''}</div>`;
   const W = R.wk;
   const wkTbl = W.wdDays && W.weDays ? `<table style="margin-top:6px"><thead><tr><th>กลุ่มวัน</th><th class="r">จำนวนวัน</th><th class="r">รถเข้าเฉลี่ย/วัน</th><th class="r">คันเฉลี่ย/วัน</th><th class="r">ซ้ำในวันเดียว/วัน</th></tr></thead><tbody>
     <tr><td>วันธรรมดา (จ.–ศ.)</td><td class="r">${W.wdDays}</td><td class="r">${fmt(W.wdVisits / W.wdDays)}</td><td class="r">${fmt(W.wdUnique / W.wdDays)}</td><td class="r">${fmt(W.wdRep / W.wdDays)}</td></tr>
@@ -2825,11 +2837,11 @@ function buildReport(withAppendix) {
   const pages = [];
   // ---------------- หน้า 1: สรุปผู้บริหาร ----------------
   pages.push(`<div class="a4">${head(TYPE_TH[type] + ' · ' + ptxt)}<div class="rb">
-    <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#4d5c52"><span><b style="color:#1d2b22">ช่วงรายงาน ${dShort(a)} – ${dShort(b)}</b> · มีข้อมูล ${R.nDataDays}/${R.calDays} วัน${R.missingDays.length ? ' · <span style="color:#be123c">ไม่มีไฟล์ ' + R.missingDays.length + ' วัน</span>' : ''}</span><span>${hasP ? esc(C.label) : 'ไม่มีข้อมูลงวดก่อนให้เทียบ'}</span></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#4d5c52"><span><b style="color:#1d2b22">ช่วงรายงาน ${dShort(a)} – ${dShort(b)}</b> · มีข้อมูล ${R.nDataDays}/${R.elapsedDays} วัน${R.missingDays.length ? ' · <span style="color:#be123c">ไม่มีไฟล์ ' + R.missingDays.length + ' วัน</span>' : ''}${R.futureDays ? ' · ยังไม่ถึง ' + R.futureDays + ' วัน (งวดยังไม่จบ)' : ''}</span><span>${hasP ? esc(C.label) : (C.yoy ? 'ไม่มีข้อมูลปีก่อนในแอปให้เทียบ' : 'ไม่มีข้อมูลงวดก่อนให้เทียบ')}</span></div>
     <div class="sec">${H(1, 'สรุปผู้บริหาร')}<p class="para">${execSummary(R, P, Rc, ptxt)}</p></div>
     <div class="kr">${kpiHtml}</div>
     <div style="display:grid;grid-template-columns:470px 1fr;gap:10px;flex:1;min-height:0">
-      <div class="sec tight">${H(2, 'ตารางตัวชี้วัดเทียบงวด')}${cmpTbl}${wkTbl}</div>
+      <div class="sec tight">${H(2, 'ตารางตัวชี้วัดเทียบ' + cmpWord())}${cmpTbl}${wkTbl}</div>
       <div class="sec">${H(3, multi ? 'แนวโน้มรถลูกค้าใหม่ / ลูกค้าเก่า (คัน/วัน)' : 'รถเข้ารายชั่วโมง: ทั้งหมด เทียบรถที่เข้าซ้ำ')}<img src="${mainImg}" style="width:560px;height:262px;display:block"></div>
     </div></div>${foot(1)}</div>`);
 
@@ -2853,7 +2865,7 @@ function buildReport(withAppendix) {
     </div>${foot(2)}</div>`);
 
   // ---------------- หน้า 3: ข้อสังเกต · ข้อเสนอแนะ · วิธีคำนวณ ----------------
-  const insHtml = insights(R, P, Rc).slice(0, 6).map((i) => `<div class="bul">${i.t.replace(/<a [^>]*>[^<]*<\/a>/g, '').replace(/<span class="(up|down|flat)">/g, (m, c) => `<span style="color:${c === 'up' ? '#047857' : c === 'down' ? '#be123c' : '#6b7a70'};font-weight:700">`)}</div>`).join('');
+  const insHtml = insights(R, P, Rc).slice(0, 6).map((i) => `<div class="bul"><span>${i.t.replace(/<a [^>]*>[^<]*<\/a>/g, '').replace(/<span class="(up|down|flat)">/g, (m, c) => `<span style="color:${c === 'up' ? '#047857' : c === 'down' ? '#be123c' : '#6b7a70'};font-weight:700">`)}</span></div>`).join('');
   const recs = recommendations(R, P, Rc);
   const priCls = { 'สูง': 'pri-h', 'กลาง': 'pri-m', 'ต่ำ': 'pri-l' };
   const excG = R.groups.filter((g) => g.excluded).map((g) => g.name).join(', ') || '-';
@@ -2871,10 +2883,10 @@ function buildReport(withAppendix) {
         • <b>รถเข้าซ้ำ</b> = รายวัน: เข้า ≥ 2 ครั้งในวันนั้น · รายสัปดาห์/เดือน/ปี: กลับมาต่างวัน (มา ≥ 2 วัน) ไม่นับเข้า-ออกหลายรอบในวันเดียว · <b>ลูกค้าเก่า</b> = เคยมาภายใน ${R.returning.lookbackDays} วันก่อนเริ่มช่วง<br>
         • <b>เวลาจอด</b> = เข้าถึงออกครั้งแรกของทะเบียนเดียวกัน ก่อนการเข้าครั้งถัดไป ไม่เกิน 24 ชม.<br>
         • ระบุรถด้วย${SET.splitProv ? 'ทะเบียน + จังหวัด' : 'ทะเบียน (ไม่แยกจังหวัด เพราะกล้องอ่านจังหวัดคลาดได้)'} · สัปดาห์ = จันทร์–อาทิตย์<br>
-        • เปรียบเทียบงวดด้วยจำนวนวันเท่ากัน (รายวันเทียบวันเดียวกันของสัปดาห์ก่อน) · ค่าเฉลี่ยคิดเฉพาะวันที่มีข้อมูล
+        • ${C.yoy ? 'เปรียบเทียบกับช่วงเดียวกันปีก่อน (รายวัน/สัปดาห์ ถอย 364 วันให้ตรงวันในสัปดาห์ · รายเดือน/ปี ใช้วันที่เดียวกัน)' : 'เปรียบเทียบงวดด้วยจำนวนวันเท่ากัน (รายวันเทียบวันเดียวกันของสัปดาห์ก่อน)'} · งวดที่ยังไม่จบเทียบเฉพาะจำนวนวันเท่ากัน · ค่าเฉลี่ยคิดเฉพาะวันที่มีข้อมูล
       </div></div>
       <div class="sec tight">${H(12, 'คุณภาพข้อมูล')}<table><tbody>
-        <tr><td>วันที่มีข้อมูล</td><td class="r">${R.nDataDays}/${R.calDays} วัน</td><td>อ่านซ้ำที่ตัดออก</td><td class="r">${fmt(R.dup)}</td></tr>
+        <tr><td>วันที่มีข้อมูล</td><td class="r">${R.nDataDays}/${R.elapsedDays} วัน</td><td>อ่านซ้ำที่ตัดออก</td><td class="r">${fmt(R.dup)}</td></tr>
         <tr><td>รายการดิบขาเข้า</td><td class="r">${fmt(R.raw)}</td><td>ทะเบียนไม่สมบูรณ์</td><td class="r">${fmt(R.invalid)}</td></tr>
         <tr><td>ไม่นับ (กลุ่ม / รายชื่อทะเบียน)</td><td class="r">${fmt(R.excluded)} / ${fmt(R.excludedPlates)}</td><td>แถวต้นทางอ่านไม่ได้</td><td class="r">${fmt(issN)}</td></tr>
         <tr><td>วันที่ข้อมูลอาจไม่ครบ</td><td class="r">${R.suspectDays.length} วัน</td><td>รายการนอกวันที่มีไฟล์ (ไม่นับ)</td><td class="r">${fmt(R.stray)}</td></tr>
@@ -2891,12 +2903,12 @@ function buildReport(withAppendix) {
       const prior = (d) => ST.db.days.some((x) => x < d && x >= d - R.returning.lookbackDays);
       for (let d = a; d <= b; d++) {
         const o = byDay.get(d), w = LPR.ymd(d).w, we = w === 0 || w === 6;
-        if (!o) { rowsH.push(`<tr><td>${dNum(d)}</td><td>${TH_D[w]}</td><td colspan="7" class="c" style="color:#be123c">${d > ST.db.maxDay ? 'ยังไม่มีข้อมูล' : 'ไม่มีไฟล์ข้อมูล'}</td><td></td></tr>`); continue; }
+        if (!o) { rowsH.push(`<tr><td>${dNum(d)}</td><td>${TH_D[w]}</td><td colspan="7" class="c" style="color:#be123c">${d >= todayBKK() ? 'ยังไม่ถึงวัน/ยังไม่จบวัน' : 'ไม่มีไฟล์ข้อมูล'}</td><td></td></tr>`); continue; }
         const inf = ST.db.dayInfo.get(d);
         rowsH.push(`<tr${we ? ' style="background:#f6fbf6"' : ''}><td>${dNum(d)}</td><td>${TH_D[w]}</td><td class="r">${fmt(o.raw)}</td><td class="r"><b>${fmt(o.visits)}</b></td><td class="r">${fmt(o.unique)}</td><td class="r">${fmt(o.sameDayRep)}</td><td class="r">${pctS(o.unique ? o.sameDayRep / o.unique : null)}</td><td class="r">${prior(d) ? fmt(o.ret) : '-'}</td><td class="r">${prior(d) ? fmt(o.neu) : '-'}</td><td>${prior(d) ? '' : 'ไม่มีข้อมูลก่อนหน้าให้ตรวจลูกค้าเก่า '}${inf && inf.suspect ? '⚠ ข้อมูลอาจไม่ครบวัน' : ''}${R.missingExit.includes(d) ? ' ไม่มีไฟล์ขาออก' : ''}</td></tr>`);
       }
       body = rowsH.join('') + `<tr class="tot"><td colspan="2">รวมทั้งช่วง (${R.nDataDays} วัน)</td><td class="r">${fmt(R.raw)}</td><td class="r">${fmt(R.visits)}</td><td class="r">${fmt(R.unique)}*</td><td class="r">${fmt(R.sameDayRep)}*</td><td class="r"></td><td class="r"></td><td class="r"></td><td></td></tr>`;
-      note = '* จำนวนคันรวมนับทะเบียนไม่ซ้ำตลอดทั้งช่วง จึงไม่เท่ากับผลรวมรายวัน · ลูกค้าเก่า = เคยมาภายใน ' + R.returning.lookbackDays + ' วันก่อนวันนั้น (ตามข้อมูลที่มีในระบบ) · แถวพื้นม่วงอ่อน = เสาร์–อาทิตย์';
+      note = '* จำนวนคันรวมนับทะเบียนไม่ซ้ำตลอดทั้งช่วง จึงไม่เท่ากับผลรวมรายวัน · ลูกค้าเก่า = เคยมาภายใน ' + R.returning.lookbackDays + ' วันก่อนวันนั้น (ตามข้อมูลที่มีในระบบ) · แถวพื้นเขียวอ่อน = เสาร์–อาทิตย์';
     } else {
       // ช่วงยาวกว่า 31 วัน: สรุปรายเดือน (วิเคราะห์แยกทีละเดือนด้วย analyze() ชุดเดียวกัน)
       thead = '<tr><th>เดือน</th><th class="r">วันที่มีข้อมูล</th><th class="r">รถเข้า (ครั้ง)</th><th class="r">เฉลี่ย/วัน</th><th class="r">รถ (คัน)</th><th class="r">รถเข้าซ้ำ (คัน)</th><th class="r">อัตราเข้าซ้ำ</th><th class="r">เวลาจอดเฉลี่ย</th><th>หมายเหตุ</th></tr>';
@@ -2904,10 +2916,10 @@ function buildReport(withAppendix) {
       while (cur <= b) {
         const [ma0, mb0] = LPR.periodRange('month', cur); const ma = Math.max(a, ma0), mb = Math.min(b, mb0); const M = getAnalysis(ma, mb, false); const o = LPR.ymd(ma0); const dim = mb0 - ma0 + 1;
         rowsH.push(M.nDataDays ? `<tr><td>${TH_M[o.m - 1]} ${be(o.y)}</td><td class="r">${M.nDataDays}/${mb - ma + 1}</td><td class="r"><b>${fmt(M.visits)}</b></td><td class="r">${fmt(M.avgVisitsPerDay)}</td><td class="r">${fmt(M.unique)}</td><td class="r">${fmt(M.repeat)}</td><td class="r">${pctS(M.repeatRate)}</td><td class="r">${durTxt(M.dwellAvg)}</td><td>${M.nDataDays < mb - ma + 1 ? 'ข้อมูลไม่ครบเดือน' : ''}${M.suspectDays.length ? ' ⚠ อาจไม่ครบ ' + M.suspectDays.length + ' วัน' : ''}</td></tr>`
-          : `<tr><td>${TH_M[o.m - 1]} ${be(o.y)}</td><td class="r">0/${mb - ma + 1}</td><td colspan="6" class="c" style="color:#be123c">${ma > ST.db.maxDay ? 'ยังไม่มีข้อมูล' : 'ไม่มีไฟล์ข้อมูล'}</td><td></td></tr>`);
+          : `<tr><td>${TH_M[o.m - 1]} ${be(o.y)}</td><td class="r">0/${mb - ma + 1}</td><td colspan="6" class="c" style="color:#be123c">${ma >= todayBKK() ? 'ยังไม่ถึงเดือนนี้' : 'ไม่มีไฟล์ข้อมูล'}</td><td></td></tr>`);
         cur = mb0 + 1;
       }
-      body = rowsH.join('') + `<tr class="tot"><td>รวมทั้งช่วง</td><td class="r">${R.nDataDays}/${R.calDays}</td><td class="r">${fmt(R.visits)}</td><td class="r">${fmt(R.avgVisitsPerDay)}</td><td class="r">${fmt(R.unique)}*</td><td class="r">${fmt(R.repeat)}*</td><td class="r">${pctS(R.repeatRate)}</td><td class="r">${durTxt(R.dwellAvg)}</td><td></td></tr>`;
+      body = rowsH.join('') + `<tr class="tot"><td>รวมทั้งช่วง</td><td class="r">${R.nDataDays}/${R.elapsedDays}</td><td class="r">${fmt(R.visits)}</td><td class="r">${fmt(R.avgVisitsPerDay)}</td><td class="r">${fmt(R.unique)}*</td><td class="r">${fmt(R.repeat)}*</td><td class="r">${pctS(R.repeatRate)}</td><td class="r">${durTxt(R.dwellAvg)}</td><td></td></tr>`;
       note = '* จำนวนคันและรถเข้าซ้ำของทั้งช่วง นับทะเบียนไม่ซ้ำตลอดช่วง จึงไม่เท่ากับผลรวมรายเดือน (รถคันเดียวกันมาได้หลายเดือน)';
     }
     pages.push(`<div class="a4">${head((R.calDays <= 31 ? 'ตารางข้อมูลรายวัน' : 'ตารางข้อมูลรายเดือน') + ' · ' + ptxt)}<div class="rb"><div class="sec dt" style="flex:1;min-height:0">${H(13, R.calDays <= 31 ? 'ตารางข้อมูลรายวัน' : 'ตารางข้อมูลรายเดือน')}<table><thead>${thead}</thead><tbody>${body}</tbody></table><div class="note" style="margin-top:4px">${note}</div></div></div>${foot(4)}</div>`);
